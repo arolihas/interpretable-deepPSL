@@ -11,7 +11,7 @@ DeepLoc https://academic.oup.com/bioinformatics/article/33/21/3387/3931857
 
 CNN-biLSTM-Attention https://github.com/JJAlmagro/subcellular_localization
 
-LSTM-Attention 
+LSTM-Attention https://www.aclweb.org/anthology/D19-1002.pdf
 
 LSTM https://github.com/ThanhTunggggg/DeepLoc
 
@@ -23,4 +23,3 @@ Attention visualization + deconvolution if needed
 
 FRESH https://arxiv.org/abs/2005.00115
 
-Attention is not not explanation https://www.aclweb.org/anthology/D19-1002.pdf
