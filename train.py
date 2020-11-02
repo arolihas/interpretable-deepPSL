@@ -6,7 +6,8 @@ import torch.optim as optim
 import torch.nn as nn
 import sklearn.metrics as metrics
  
-from models import DeepLoc
+from models import DeepLocNoAtt
+from tqdm import trange
 
 #Hyperparameters
 batch_size = 128
@@ -24,21 +25,25 @@ testloader = data.DataLoader(testset, batch_size=batch_size)
 print("Data loaded")
 
 #Training                               
-net = DeepLoc()
+net = DeepLocNoAtt()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 print("Model initialized")
 
 min_loss = float('inf')
-PATH = './saved_params/cnn_bilstm_attn.pth'
+PATH = './saved_params/cnn_bilstm.pth'
 print("Training")
-for epoch in range(num_epochs):
+
+t = trange(num_epochs)
+for epoch in t:
     losses, accs = [], []
     for i, data in enumerate(trainloader, 0):
         inputs, masks, labels = data
         labels = labels.long()
         optimizer.zero_grad()
+        # print(inputs.size())
         outputs = net.forward(inputs, masks)
+        # print(outputs.size(), labels.size())
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -47,19 +52,19 @@ for epoch in range(num_epochs):
         losses.append(loss)
         correct = labels.eq(outputs.argmax(-1)).sum()
         accs.append(int(correct)/batch_size)
-    print("Epoch {} \nLoss {}\nAccuracy {}".format(epoch, sum(losses)/len(losses), sum(accs)/len(accs)))
+    t.set_postfix(loss=sum(losses)/len(losses), acc=(sum(accs)/len(accs)))
 
 print("Results")
 #Testing
-losses, accs = [], []
+vlosses, vaccs = [], []
 for i, data in enumerate(testloader, 0):
     inputs, masks, labels = data
     outputs = net.forward(inputs, masks)
     loss = criterion(outputs, labels.long())
-    losses.append(loss)
+    vlosses.append(loss)
     correct = labels.eq(outputs.argmax(-1)).sum()
-    accs.append(int(correct)/batch_size)
+    vaccs.append(int(correct)/batch_size)
 
-avg_loss = sum(losses)/len(losses)
-avg_acc = sum(accs)/len(accs)
+avg_loss = sum(vlosses)/len(vlosses)
+avg_acc = sum(vaccs)/len(vaccs)
 print('avg loss: {}\navg acc: {}'.format(avg_loss, avg_acc))
