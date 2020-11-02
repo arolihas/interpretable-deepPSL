@@ -52,7 +52,7 @@ for epoch in t:
         losses.append(loss)
         correct = labels.eq(outputs.argmax(-1)).sum()
         accs.append(int(correct)/batch_size)
-    t.set_postfix(loss=sum(losses)/len(losses), acc=(sum(accs)/len(accs)))
+    t.set_postfix(loss=int(sum(losses)/len(losses)), acc=(sum(accs)/len(accs)))
 
 print("Results")
 #Testing
