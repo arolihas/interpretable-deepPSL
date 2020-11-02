@@ -10,7 +10,7 @@ from models import DeepLoc
 
 #Hyperparameters
 batch_size = 128
-num_epochs = 10
+num_epochs = 120
 
 #Data 
 train = np.load('data/train.npz')
