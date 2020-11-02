@@ -1,0 +1,7 @@
+numpy
+Pillow
+torch>=0.3
+tabulate
+tqdm
+# previously `Bio` didn't seem to work. Tried `biopython`: https://stackoverflow.com/a/63112976/7303112) - worked!
+BioPython 
