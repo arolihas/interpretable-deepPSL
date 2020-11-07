@@ -17,9 +17,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-class DeepLoc(nn.Module):
+class DeepLocNoAtt(nn.Module):
     def __init__(self, batch_size=128, seq_len=1000, n_feat=20, n_hid=15, n_class=10, learning_rate=0.0025, n_filters=10, dropout=0.5):
-        super(DeepLoc, self).__init__()
+        super(DeepLocNoAtt, self).__init__()
         self.batch_size = batch_size
         self.seq_len = seq_len
         self.n_feat = n_feat
@@ -32,7 +32,7 @@ class DeepLoc(nn.Module):
         self.conv3 = nn.Conv1d(in_channels=self.n_feat, out_channels=self.n_filt, kernel_size=3, padding=1, stride=1)
         self.conv5 = nn.Conv1d(in_channels=self.n_feat, out_channels=self.n_filt, kernel_size=5, padding=2, stride=1)
         self.convF = nn.Conv1d(in_channels=self.n_feat, out_channels=self.n_filt*2, kernel_size=3, padding=1, stride=1)
-        self.bilstm = nn.LSTM(input_size=self.seq_len, num_layers=2, hidden_size=self.n_hid, bidirectional=True)
+        self.bilstm = nn.LSTM(input_size=self.n_feat, num_layers=2, hidden_size=self.n_hid, bidirectional=True)
         self.att = nn.MultiheadAttention(embed_dim=self.n_hid*2, num_heads=2)
         self.dense = nn.Linear(in_features=self.n_hid*2, out_features=self.n_hid*2)
         self.dropout = nn.Dropout(p=self.drop_prob)
@@ -45,15 +45,18 @@ class DeepLoc(nn.Module):
         conv_3 = self.relu(self.conv3(x))
         conv_5 = self.relu(self.conv5(x))
         conv_cat = torch.cat((conv_3, conv_5), dim=1)
-        conv_f = self.relu(self.convF(conv_cat))
+        conv_f = self.relu(self.convF(conv_cat)).permute([0,2,1])
+        # print('cf:', conv_f.size())
         # masked = conv_f[mask.long()]
         # print(masked.size())
         lstm, _ = self.bilstm(conv_f)
         seq = torch.tanh(lstm)
-        att_w, _ = self.att(seq, seq, seq)
-        sliced = att_w[:,-1,:]
+        # att_w, _ = self.att(seq, seq, seq)
+        # sliced = att_w[:,-1,:]
+        sliced = seq[:,-1,:]
         ff_layer = self.relu(self.dropout(self.dense(sliced)))
         logits = self.out(ff_layer)
-        out = self.softmax(logits)
-        return out
+        # out = self.softmax(logits)
+        # print(logits.size())
+        return logits
         
