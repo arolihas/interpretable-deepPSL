@@ -23,3 +23,5 @@ Attention visualization + deconvolution if needed
 
 FRESH https://arxiv.org/abs/2005.00115
 
+
+DeepPrime2Sec: https://github.com/ehsanasgari/DeepPrime2Sec
