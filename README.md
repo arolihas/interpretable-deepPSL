@@ -23,3 +23,8 @@ Attention visualization + deconvolution if needed
 
 FRESH https://arxiv.org/abs/2005.00115
 
+**Backup: Secondary Structure Prediction**
+
+DeepPrime2Sec: https://github.com/ehsanasgari/DeepPrime2Sec
+
+https://www.biorxiv.org/content/10.1101/705426v1.full.pdf
