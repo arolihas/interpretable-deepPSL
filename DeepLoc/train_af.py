@@ -1,4 +1,4 @@
-"""Train the model"""
+"""Train MLP layer model"""
 
 import argparse
 import logging
@@ -10,7 +10,7 @@ import torch.optim as optim
 from tqdm import trange
 
 import utils
-import model.net as net
+import model.uniform_net as net
 from model.data_loader import DataLoader
 from evaluate import evaluate
 
@@ -132,12 +132,11 @@ def train_and_evaluate(model, train_data, val_data, optimizer, loss_fn, metrics,
         if is_best:
             logging.info("- Found new best accuracy")
             best_val_acc = val_acc
+            print(model.affine_weight.require_grads)
             
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(model_dir, "metrics_val_best_weights.json")
             utils.save_dict_to_json(val_metrics, best_json_path)
-            torch.save(model.w_omega,'w_omega.pt')
-            torch.save(model.u_omega,'u_omega.pt')
 
         # Save latest val metrics in a json file in the model directory
         last_json_path = os.path.join(model_dir, "metrics_val_last_weights.json")
