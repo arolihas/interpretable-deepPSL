@@ -12,6 +12,7 @@ class Net(nn.Module):
 
         #hyperparameters
         self.conv_out = 10
+        self.attention_size = params.attention_size
         # the embedding takes as input the vocab_size and the embedding_dim
         self.embedding = nn.Embedding(params.vocab_size, params.embedding_dim)
 
@@ -38,6 +39,8 @@ class Net(nn.Module):
             num_layers=params.n_layers, 
             bidirectional=True,
             dropout=params.dropout)
+        self.lstm_hidden_dim = params.lstm_hidden_dim
+        self.n_layers = params.n_layers
         self.dropout = nn.Dropout(params.dropout)
 
         # the fully connected layer transforms the output to give the final output layer
@@ -50,6 +53,32 @@ class Net(nn.Module):
             self.w_omega = nn.Linear(params.lstm_hidden_dim * params.n_layers, self.attention_size, bias=False)
             self.u_omega = nn.Linear(self.attention_size, 1, bias=False)
         
+    def attention_net(self, lstm_output):
+        sequence_length = lstm_output.size()[0]
+        batch_size = lstm_output.size()[1]
+        if self.attention_type != "average":
+            output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
+            # attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
+            # attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
+            attn_tanh = torch.tanh(self.w_omega(output_reshape))
+            attn_hidden_layer = self.u_omega(attn_tanh)
+            
+            exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1, sequence_length])
+            alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
+            #print(alphas.size()) = (batch_size, squence_length)
+
+            alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
+            # print("REGULAR ATTENTION!")
+            #print(alphas_reshape.size()) = (batch_size, squence_length, 1)
+        else:
+            alphas_reshape = torch.ones(batch_size, sequence_length, 1).to(self.device)
+        state = lstm_output.permute(1, 0, 2)
+        #print(state.size()) = (batch_size, squence_length, hidden_size*layer_size)
+
+        attn_output = torch.sum(state * alphas_reshape, 1)
+        #print(attn_output.size()) = (batch_size, hidden_size*layer_size)
+        return attn_output, alphas_reshape
+
     def forward(self, s):
 
         embedded = self.embedding(s)            # dim: batch_size x seq_len x embedding_dim
@@ -61,9 +90,13 @@ class Net(nn.Module):
         # run the LSTM along the sentences of length seq_len
         embedded = concat.permute(2, 0, 1)  # dim: seq_len, batch_size, embedding_dim
         output, (hidden_state, cell_state)  = self.lstm(embedded) 
+        
+        attn_output, attn_weights = self.attention_net(output)
+        hidden = self.dropout(attn_output)
+        #----------------without attention---------------------
+        #hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
+        # #hidden = [batch size, lstm_hidden_dim * num directions]
 
-        hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
-        #hidden = [batch size, lstm_hidden_dim * num directions]
 
         return self.fc(hidden) # dim: batch_size x num_tags
 
