@@ -5,6 +5,9 @@ import shutil
 
 import torch
 
+# for coloring
+import matplotlib
+import matplotlib.pyplot as plt
 
 class Params():
     """Class that loads hyperparameters from a json file.
@@ -135,10 +138,56 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     """
     if not os.path.exists(checkpoint):
         raise ("File doesn't exist {}".format(checkpoint))
-    checkpoint = torch.load(checkpoint)
+    print("loading", checkpoint)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(checkpoint, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     if optimizer:
         optimizer.load_state_dict(checkpoint['optim_dict'])
-
     return checkpoint
+
+def map_sentence_to_color(sequence, attn_weights):
+    """untested with GPU, might need to move sentence and weights to cpu"""
+    wordmap = matplotlib.cm.get_cmap('OrRd')
+    print(wordmap(attn_weights[0]))
+    print(sum(attn_weights))
+    print(max(attn_weights))
+    print(attn_weights[:5])
+    # exit()
+    template = '<span class="barcode"; style="color: black; background-color: {}">{}</span>'
+    result = ''
+    for word, score in zip(sequence, attn_weights):
+        color = matplotlib.colors.rgb2hex(wordmap(score)[:3])
+        result += template.format(color, '&nbsp' + word + '&nbsp')
+    return result
+
+import webbrowser
+import os
+def visualize(model, sequence, label, data_loader, view_browser=True):
+    """
+    expects sequence to be batch size 1
+    """
+    print("Visualizing...")
+    assert sequence.shape[0] == 1 and label.shape[0] == 1, "visualizing sequence should be batch size 1"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    output, attn_weights = model(sequence)
+    attn = attn_weights.squeeze()
+
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = attn_weights.squeeze().tolist()
+    result = map_sentence_to_color(sequence, attn_weights)
+    
+    with open('result.html', 'w') as f:
+        f.write(result)
+    
+    # webbrowser.open_new('result.html')
+    fname = 'file://'+os.getcwd()+'/result.html'
+    print("Opening", fname)
+    webbrowser.open_new(fname)
+
+    
+
+
+
