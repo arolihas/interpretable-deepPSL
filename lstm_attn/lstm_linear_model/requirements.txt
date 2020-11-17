@@ -1,6 +1,7 @@
 numpy
 Pillow
-torch>=0.3
+torch==1.7.0
+torchvision==0.8.1
 tabulate
 tqdm
 # previously `Bio` didn't seem to work. Tried `biopython`: https://stackoverflow.com/a/63112976/7303112) - worked!
