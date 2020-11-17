@@ -36,21 +36,22 @@ class Net(nn.Module):
             # do stuff for average attention_type
             pass
         else:
-            # self.w_omega = nn.Linear(params.lstm_hidden_dim * params.n_layers, self.attention_size, bias=False)
-            # self.u_omega = nn.Linear(self.attention_size, 1)
-            self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).to(self.device), requires_grad=True)
-            self.u_omega = Variable(torch.zeros(self.attention_size).to(self.device), requires_grad=True)
+            self.w_omega = nn.Linear(params.lstm_hidden_dim * params.n_layers, self.attention_size, bias=False)
+            self.u_omega = nn.Linear(self.attention_size, 1, bias=False)
+            # self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).to(self.device), requires_grad=True)
+            # self.u_omega = Variable(torch.zeros(self.attention_size).to(self.device), requires_grad=True)
         
     def attention_net(self, lstm_output):
         sequence_length = lstm_output.size()[0]
         batch_size = lstm_output.size()[1]
         if self.attention_type != "average":
             output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
-            attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
-            attn_hidden_layer = torch.mm(
-                attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
-            exps = torch.Tensor.reshape(
-                torch.exp(attn_hidden_layer), [-1, sequence_length])
+            # attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
+            # attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
+            attn_tanh = torch.tanh(self.w_omega(output_reshape))
+            attn_hidden_layer = self.u_omega(attn_tanh)
+            
+            exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1, sequence_length])
             alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
             #print(alphas.size()) = (batch_size, squence_length)
 

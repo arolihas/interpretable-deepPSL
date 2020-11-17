@@ -164,6 +164,8 @@ def map_sentence_to_color(sequence, attn_weights):
 
 import webbrowser
 import os
+import numpy as np
+
 def visualize(model, sequence, label, data_loader, view_browser=True):
     """
     expects sequence to be batch size 1
@@ -177,6 +179,7 @@ def visualize(model, sequence, label, data_loader, view_browser=True):
 
     sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
     attn_weights = attn_weights.squeeze().tolist()
+    # attn_weights = np.random.rand(len(sequence))
     result = map_sentence_to_color(sequence, attn_weights)
     
     with open('result.html', 'w') as f:
