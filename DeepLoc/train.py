@@ -136,8 +136,6 @@ def train_and_evaluate(model, train_data, val_data, optimizer, loss_fn, metrics,
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(model_dir, "metrics_val_best_weights.json")
             utils.save_dict_to_json(val_metrics, best_json_path)
-            torch.save(model.w_omega,'w_omega.pt')
-            torch.save(model.u_omega,'u_omega.pt')
 
         # Save latest val metrics in a json file in the model directory
         last_json_path = os.path.join(model_dir, "metrics_val_last_weights.json")

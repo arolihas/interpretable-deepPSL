@@ -48,14 +48,19 @@ def train(model, optimizer, loss_fn, data_iterator, metrics, params, num_steps):
     for i in t:
         # fetch the next training batch
         train_batch, labels_batch = next(data_iterator)
-
+        # print(i, ":", train_batch.shape)
         # compute model output and loss
-        output_batch = model(train_batch)
+        output_batch, _ = model(train_batch)
         loss = loss_fn(output_batch, labels_batch)
 
         # clear previous gradients, compute gradients of all variables wrt loss
         optimizer.zero_grad()
-        loss.backward()
+        try:
+            loss.backward()
+        except Exception as e:
+            print("ERROR:", e)
+            print("TRAIN SHAPE: ", train_batch.shape)
+            # die()
 
         # performs updates using calculated gradients
         optimizer.step()
@@ -75,6 +80,7 @@ def train(model, optimizer, loss_fn, data_iterator, metrics, params, num_steps):
         # update the average loss
         loss_avg.update(loss.item())#loss.data[0])
         t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
+        # exit()  
 
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
@@ -140,6 +146,7 @@ def train_and_evaluate(model, train_data, val_data, optimizer, loss_fn, metrics,
         # Save latest val metrics in a json file in the model directory
         last_json_path = os.path.join(model_dir, "metrics_val_last_weights.json")
         utils.save_dict_to_json(val_metrics, last_json_path)
+
     
 
 if __name__ == '__main__':
@@ -152,6 +159,7 @@ if __name__ == '__main__':
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()
+    params.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Set the random seed for reproducible experiments
     torch.manual_seed(230)
@@ -177,6 +185,8 @@ if __name__ == '__main__':
 
     # Define the model and optimizer
     model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    logging.info(f"batch_size_{params.batch_size}-LR_{params.learning_rate}-Drop_{params.dropout}-Attn_{params.attention_size}")
+
     torch.save(model, 'model_for_visulization.pth')
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
     

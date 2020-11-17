@@ -25,6 +25,7 @@ class DataLoader(object):
         with open(vocab_path) as f:
             for i, l in enumerate(f.read().splitlines()):
                 self.vocab[l] = i
+        self.idx_to_vocab = {y:x for x,y in self.vocab.items()}
         
         self.pad_ind = self.vocab[self.dataset_params.pad_word]
 
@@ -33,6 +34,7 @@ class DataLoader(object):
         with open(tags_path) as f:
             for i, t in enumerate(f.read().splitlines()):
                 self.tag_map[t] = i
+        self.idx_to_tag = {y:x for x,y in self.tag_map.items()}
 
         # adding dataset parameters to param (e.g. vocab size, )
         params.update(json_path)
