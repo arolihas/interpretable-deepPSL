@@ -4,15 +4,22 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 
 class Net(nn.Module):
     def __init__(self, params):
         super(Net, self).__init__()
 
+        self.device = params.device
         # the embedding takes as input the vocab_size and the embedding_dim
         self.embedding = nn.Embedding(params.vocab_size, params.embedding_dim)
 
+        self.attention_size = params.attention_size
+        self.lstm_hidden_dim = params.lstm_hidden_dim
+        self.n_layers = params.n_layers
+        self.directions = 2 if params.bidirectional == 1 else 1
+        self.bidirectional = True if params.bidirectional == 1 else False
         # the LSTM takes as input the size of its input (embedding_dim), its hidden size
         # for more details on how to use it, check out the documentation
         self.lstm = nn.LSTM(params.embedding_dim, params.lstm_hidden_dim,\
@@ -22,7 +29,45 @@ class Net(nn.Module):
 
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
+
+        # Parameters for attention layer (from Hao's implementation)
+        self.attention_type = params.attention_type
+        if self.attention_type == "average":
+            # do stuff for average attention_type
+            pass
+        else:
+            self.w_omega = nn.Linear(params.lstm_hidden_dim * params.n_layers, self.attention_size, bias=False)
+            self.u_omega = nn.Linear(self.attention_size, 1, bias=False)
+            # self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).to(self.device), requires_grad=True)
+            # self.u_omega = Variable(torch.zeros(self.attention_size).to(self.device), requires_grad=True)
         
+    def attention_net(self, lstm_output):
+        sequence_length = lstm_output.size()[0]
+        batch_size = lstm_output.size()[1]
+        if self.attention_type != "average":
+            output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
+            # attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
+            # attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
+            attn_tanh = torch.tanh(self.w_omega(output_reshape))
+            attn_hidden_layer = self.u_omega(attn_tanh)
+            
+            exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1, sequence_length])
+            alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
+            #print(alphas.size()) = (batch_size, squence_length)
+
+            alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
+            # print("REGULAR ATTENTION!")
+            #print(alphas_reshape.size()) = (batch_size, squence_length, 1)
+        else:
+            alphas_reshape = torch.ones(batch_size, sequence_length, 1).to(self.device)
+        state = lstm_output.permute(1, 0, 2)
+        #print(state.size()) = (batch_size, squence_length, hidden_size*layer_size)
+
+        attn_output = torch.sum(state * alphas_reshape, 1)
+        #print(attn_output.size()) = (batch_size, hidden_size*layer_size)
+        return attn_output, alphas_reshape
+
+
     def forward(self, s):
 
         embedded = self.embedding(s)            # dim: batch_size x seq_len x embedding_dim
@@ -30,12 +75,17 @@ class Net(nn.Module):
 
         # run the LSTM along the sentences of length seq_len
         output, (hidden_state, cell_state)  = self.lstm(embedded) 
+        #output dim: seq_len, batch_size, num_directions*hidden_size
+        # #hidden_state dim: num_layers*num_directions, batch_size, hidden_size
+        #-----------------using attention layer---------------------
+        attn_output, attn_weights = self.attention_net(output)
+        hidden = self.dropout(attn_output)
+        #----------------without attention---------------------
+        #hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
+        # #hidden = [batch size, lstm_hidden_dim * num directions]
 
-        hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
-        #hidden = [batch size, lstm_hidden_dim * num directions]
 
-
-        return self.fc(hidden) # dim: batch_size x num_tags
+        return self.fc(hidden), attn_weights # dim: batch_size x num_tags
 
 
 def loss_fn(outputs, labels):

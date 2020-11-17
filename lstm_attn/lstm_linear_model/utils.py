@@ -5,6 +5,9 @@ import shutil
 
 import torch
 
+# for coloring
+import matplotlib
+import matplotlib.pyplot as plt
 
 class Params():
     """Class that loads hyperparameters from a json file.
@@ -135,10 +138,94 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     """
     if not os.path.exists(checkpoint):
         raise ("File doesn't exist {}".format(checkpoint))
-    checkpoint = torch.load(checkpoint)
+    print("loading", checkpoint)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(checkpoint, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     if optimizer:
         optimizer.load_state_dict(checkpoint['optim_dict'])
-
     return checkpoint
+
+def map_sentence_to_color(sequence, attn_weights):
+    """untested with GPU, might need to move sentence and weights to cpu"""
+    wordmap = matplotlib.cm.get_cmap('OrRd')
+    print(wordmap(attn_weights[0]))
+    print(sum(attn_weights))
+    print(max(attn_weights))
+    print(attn_weights[:5])
+    # exit()
+    template = '<span class="barcode"; style="color: black; background-color: {}">{}</span>'
+    result = ''
+    for word, score in zip(sequence, attn_weights):
+        color = matplotlib.colors.rgb2hex(wordmap(score)[:3])
+        result += template.format(color, '&nbsp' + word + '&nbsp')
+    return result
+
+import webbrowser
+import os
+import numpy as np
+
+def bar_chart(categories, scores, graph_title="Prediction", output_name="prediction_bar_chart.png"):
+    y_pos = range(len(categories))
+
+    fig, ax = plt.subplots()
+    plt.bar(y_pos, scores, align='center', alpha=0.5)
+    plt.xticks(y_pos, categories)
+    plt.ylabel('Softmax Score')
+    plt.title(graph_title)
+
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.setp(ax.get_xticklabels(), rotation=30,
+             horizontalalignment='right', fontsize='x-small')
+    plt.tight_layout()
+
+    plt.savefig(output_name)
+
+import time
+import imgkit
+
+def visualize(model, sequence, label, data_loader, view_browser=True):
+    """
+    expects sequence to be batch size 1
+    """
+    print("Visualizing...")
+    assert sequence.shape[0] == 1 and label.shape[0] == 1, "visualizing sequence should be batch size 1"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    output, attn_weights = model(sequence)
+
+    classes = list(data_loader.tag_map.keys())
+    true_label = label.tolist()[0]
+    true_label = classes[true_label]
+
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = attn_weights.squeeze().tolist()
+    # attn_weights = np.random.rand(len(sequence))
+    result = "<h2>Attention Visualization</h2>"
+    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    # print(sm.argmax().item())
+    predicted_label = classes[sm.argmax().item()]
+    bar_chart(classes, sm, 'Prediction')
+    result += '<br><img src="prediction_bar_chart.png"><br>'
+    result += f'<br>Prediction = {predicted_label}<br>'
+    result += f'<br>True label = {true_label}<br>'
+    result += map_sentence_to_color(sequence, attn_weights)
+    
+    fname = time.strftime("%Y-%m-%d-%H.%M.%S_"+str(predicted_label == true_label) + ".html")
+    with open(fname, 'w') as f:
+        f.write(result)
+    
+    print("Saved html to", fname)
+    fname = 'file://'+os.getcwd()+'/'+fname
+
+    if view_browser:
+        print("Opening", fname)
+        webbrowser.open_new(fname)
+
+    
+
+
+

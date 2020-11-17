@@ -10,12 +10,37 @@ import utils
 import model.net as net
 from model.data_loader import DataLoader
 
+from tqdm import tqdm
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data', help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments', help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
+parser.add_argument('--visualize', default=False, help="vis ?", action="store_true")
 
+def visualize(model, data_loader, data_iterator, metrics, params, num_steps):
+    """
+    CONTINUE NOTE:
+        https://github.com/sharkmir1/Hierarchical-Attention-Network/blob/master/utils.py
+        Implement attention using code from above
+        TODO: get self.vocab and self.tag_map to view it properly 
+        but just visualize it on indices for now. 
+        1. call visualize from eval 
+        2. return attn_weights from model 
+        3. implement vis using above code (test.py and utils.py)
+    """
+    # call utils.visualize to visualize
+    model.eval()
+
+    for _ in range(num_steps):
+        data_batch, labels_batch = next(data_iterator)
+        print(data_batch.shape)
+        print(labels_batch.shape)
+        # print(data_batch[0])
+        utils.visualize(model, data_batch, labels_batch, data_loader)
+        # exit()
+        _ = input("ENTER to continue")
 
 def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
     """Evaluate the model on `num_steps` batches.
@@ -36,12 +61,12 @@ def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
     summ = []
 
     # compute metrics over the dataset
-    for _ in range(num_steps):
+    for _ in tqdm(range(num_steps)):
         # fetch the next evaluation batch
         data_batch, labels_batch = next(data_iterator)
         
         # compute model output
-        output_batch = model(data_batch)
+        output_batch, _ = model(data_batch)
         loss = loss_fn(output_batch, labels_batch)
 
         # extract data from torch Variable, move to cpu, convert to numpy arrays
@@ -73,6 +98,7 @@ if __name__ == '__main__':
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()     # use GPU is available
+    params.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Set the random seed for reproducible experiments
     torch.manual_seed(230)
@@ -85,6 +111,7 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # load data
+    if args.visualize: params.batch_size = 1
     data_loader = DataLoader(args.data_dir, params)
     data = data_loader.load_data(['test'], args.data_dir)
     test_data = data['test']
@@ -106,8 +133,11 @@ if __name__ == '__main__':
     # Reload weights from the saved file
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth'), model)
 
-    # Evaluate
     num_steps = (params.test_size + 1) // params.batch_size
-    test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps)
-    save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
-    utils.save_dict_to_json(test_metrics, save_path)
+    if args.visualize:
+        visualize(model, data_loader, test_data_iterator, metrics, params, num_steps)
+    else:
+        # Evaluate
+        test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps)
+        save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
+        utils.save_dict_to_json(test_metrics, save_path)

@@ -47,12 +47,32 @@ if __name__ == "__main__":
     params = utils.Params(json_path)
 
     # Perform hypersearch over one parameter
-    learning_rates = [1e-4, 1e-3, 1e-2]
+    # learning_rates = [1e-4, 1e-3, 1e-2]
+        # for learning_rate in learning_rates:
+        #     # Modify the relevant parameter in params
+        #     params.learning_rate = learning_rate
 
-    for learning_rate in learning_rates:
-        # Modify the relevant parameter in params
-        params.learning_rate = learning_rate
+        #     # Launch job (name has to be unique)
+        #     job_name = "learning_rate_{}".format(learning_rate)
+        #     launch_training_job(args.parent_dir, args.data_dir, job_name, params)
 
-        # Launch job (name has to be unique)
-        job_name = "learning_rate_{}".format(learning_rate)
-        launch_training_job(args.parent_dir, args.data_dir, job_name, params)
+    # learning_rates = [1e-4, 1e-3, 1e-2, 0.1]
+    learning_rates = [1e-3, 1e-2, 0.1]
+    attention_weights = [32, 64, 128, 512, 1024, 2048]
+    dropouts = [0.0, 0.2, 0.5]
+    # attention_weights = [512, 1024]
+    for lr in learning_rates:
+        for attn_size in attention_weights:
+            for d in dropouts:
+                if attn_size in [512]: params.batch_size = 50
+                elif attn_size in [1024, 2048]: params.batch_size = 25
+                else: params.batch_size = 100
+                # if lr == 1e-3 and attn_size in [32, 64, 128, 512, 1024]: continue
+                if lr == 1e-3: continue
+                if lr == 1e-2: continue
+                if lr == 0.1 and attn_size in [32] and d in [0.0]: continue
+                params.dropout = d
+                params.attention_size = attn_size
+                params.learning_rate = lr
+                job_name = "attn_size_{}-lr_{}-drop_{}".format(attn_size, lr, d)
+                launch_training_job(args.parent_dir, args.data_dir, job_name, params)

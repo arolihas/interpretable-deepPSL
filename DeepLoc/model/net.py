@@ -27,9 +27,6 @@ class Net(nn.Module):
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
         self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).cuda())
         self.u_omega = Variable(torch.zeros(self.attention_size).cuda())
-        self.w_omega.require_grads = True
-        self.u_omega.require_grads = True
-        #self.alphas_reshape = None
        
     def attention_net(self, lstm_output):
         output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
@@ -40,11 +37,10 @@ class Net(nn.Module):
         exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1,sequence_length])
         alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
         #print(alphas.size()) = (batch_size, squence_length)
-        #print(alphas.size())
 
-        alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
+        #alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
         #print(alphas_reshape.size()) = (batch_size, squence_length, 1)
-        #alphas_reshape = torch.ones(batch_size, sequence_length, 1).cuda()
+        alphas_reshape = torch.ones(batch_size, sequence_length, 1).cuda()
         state = lstm_output.permute(1, 0, 2)
         #print(state.size()) = (batch_size, squence_length, hidden_size*layer_size)
 
