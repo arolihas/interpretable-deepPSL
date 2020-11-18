@@ -8,5 +8,7 @@
     "lstm_hidden_dim": 40,
     "embedding_dim": 20,
     "save_summary_steps": 100,
-    "attention": 1
+    "attention": 1,
+    "attention_type": "regular",
+    "attention_size": 512
 }

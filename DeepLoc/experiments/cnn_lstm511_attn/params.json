@@ -7,5 +7,7 @@
     "n_layers":2,
     "lstm_hidden_dim": 40,
     "embedding_dim": 20,
-    "save_summary_steps": 100
+    "save_summary_steps": 100,
+    "attention_type": "regular",
+    "attention_size": 512
 }
