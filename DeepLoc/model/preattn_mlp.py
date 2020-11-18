@@ -29,17 +29,24 @@ class Net(nn.Module):
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(self.mlayer, params.number_of_classes)
         #------------------attention params---------------------------------------------------------------------
-        self.w_omega = torch.load('w_omega.pt')
+        #self.w = nn.Linear(self.mlayer,self.attention_size,bias = False)
+        #self.w.load_state_dict(torch.load('w_layer_state.pt'))
         #load weights from previous bilstm model
-        self.u_omega = torch.load('u_omega.pt')
+        #self.u = nn.Linear(self.attention_size,1,bias=False)
+        #self.u.load_state_dict(torch.load('u_layer_state.pt'))
         #load weights from previous bilstem model
-        self.w_omega.require_grads = False
+        self.w = torch.load('w_omega.pt')
+        self.w = torch.Tensor.reshape(self.w,[self.mlayer,self.attention_size])
+        self.w.require_grads = False
         #freeze weight
-        self.u_omega.require_grads = False
+        self.u = torch.load('u_omega.pt')
+        self.u = torch.Tensor.reshape(self.u,[self.attention_size,1])
+        self.u.require_grads = False
         #freeze weight
         #-----------------affine params----------------------------------------
-        self.affine_weight = Variable(torch.zeros(params.embedding_dim,self.mlayer).cuda())
-        self.affine_weight.require_grads = True
+        self.aw = nn.Linear(params.embedding_dim,self.mlayer)
+        #self.affine_weight = Variable(torch.zeros(params.embedding_dim,self.mlayer).cuda())
+        #self.affine_weight.require_grads = True
         
         
         
@@ -48,7 +55,8 @@ class Net(nn.Module):
         seq_length = embedding.size()[0]
         embedding_reshape = torch.Tensor.reshape(embedding, [-1, self.embedding_dim]) 
         #embedding_reshape dim: seq_len*batch_size x embedding_dim
-        affine_tanh = torch.tanh(torch.mm(embedding_reshape, self.affine_weight)) 
+        #affine_tanh = torch.tanh(torch.mm(embedding_reshape, self.affine_weight))
+        affine_tanh = torch.tanh(self.aw(embedding_reshape)) 
         #affine_tanh dim: seq_len*batch_size x mlayer
         affine_output = torch.Tensor.reshape(affine_tanh, [seq_length, self.batch_size, self.mlayer]) 
         #affine_output dim: seq_len x batch_size x mlayer
@@ -59,9 +67,11 @@ class Net(nn.Module):
         #output_reshape dim: seq_len*batch_size x m_layer
         sequence_length = affine_output.size()[0]
         batch_size = affine_output.size()[1]
-        attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
+        attn_tanh = torch.tanh(torch.mm(output_reshape, self.w))
+        #attn_tanh = torch.tanh(self.w(output_reshape))
         #attn_tanh dim: seq_len*batch_size x attention_size
-        attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
+        attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u, [-1, 1]))
+        #attn_hidden_layer = self.u(attn_tanh)
         #attn_hidden_payer dim: seq_len*batch_size x 1
         exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1,sequence_length])
         alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
