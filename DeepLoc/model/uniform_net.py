@@ -38,6 +38,7 @@ class Net(nn.Module):
         #-----------------affine params----------------------------------------
         self.affine_weight = Variable(torch.zeros(params.embedding_dim,self.mlayer).cuda())
         self.affine_weight.require_grads = True
+        self.aw = nn.Linear(params.embedding_dim,self.mlayer)
         
         
         
@@ -46,7 +47,8 @@ class Net(nn.Module):
         seq_length = embedding.size()[0]
         embedding_reshape = torch.Tensor.reshape(embedding, [-1, self.embedding_dim]) # embedding_reshape dim: seq_len*batch_size x embedding_dim
         #print(embedding_reshape.size())
-        affine_tanh = torch.tanh(torch.mm(embedding_reshape, self.affine_weight)) #affine_tanh dim: seq_len*batch_size x mlayer
+        #affine_tanh = torch.tanh(torch.mm(embedding_reshape, self.affine_weight)) #affine_tanh dim: seq_len*batch_size x mlayer
+        affine_tanh = torch.tanh(self.aw(embedding_reshape))
         #print(affine_tanh.size())
         affine_output = torch.Tensor.reshape(affine_tanh, [seq_length, self.batch_size, self.mlayer]) #affine_output dim: seq_len x batch_size x mlayer
         #print(affine_output.size())
