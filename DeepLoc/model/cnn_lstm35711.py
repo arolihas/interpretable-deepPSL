@@ -11,16 +11,19 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         #hyperparameters
-        self.conv_out = 10
+        self.conv_out = 5
         # the embedding takes as input the vocab_size and the embedding_dim
         self.embedding = nn.Embedding(params.vocab_size, params.embedding_dim)
         self.attention_size = params.attention_size
+        self.attention = params.attention
+        if self.attention:
+            print("attention applied")
         #Conv layer
-        self.conv11 = nn.Conv1d(
+        self.conv3 = nn.Conv1d(
             in_channels=params.embedding_dim, 
             out_channels=self.conv_out,
-            kernel_size=11, 
-            padding=5, 
+            kernel_size=3, 
+            padding=1, 
             stride=1)
         self.conv5 = nn.Conv1d(
             in_channels=params.embedding_dim, 
@@ -28,6 +31,19 @@ class Net(nn.Module):
             kernel_size=5, 
             padding=2, 
             stride=1)
+        self.conv7 = nn.Conv1d(
+            in_channels=params.embedding_dim, 
+            out_channels=self.conv_out,
+            kernel_size=7, 
+            padding=3, 
+            stride=1)
+        self.conv11 = nn.Conv1d(
+            in_channels=params.embedding_dim, 
+            out_channels=self.conv_out,
+            kernel_size=11, 
+            padding=5, 
+            stride=1)
+        
         self.relu = nn.ReLU()
         
         # the LSTM takes as input the size of its input (embedding_dim), its hidden size
@@ -85,16 +101,21 @@ class Net(nn.Module):
         embedded = embedded.permute(0, 2, 1) # dim: batch_size, embedding_dim, seq_len
         
         conv_11 = self.relu(self.conv11(embedded)) # dim: batch_size, embedding_dim, seq_len
+        conv_7 = self.relu(self.conv7(embedded))
         conv_5 = self.relu(self.conv5(embedded))
-        concat = torch.cat((conv_11, conv_5), dim=1)
+        conv_3 = self.relu(self.conv3(embedded))
+
+        concat = torch.cat((conv_3, conv_5, conv_7, conv_11), dim=1)
         # run the LSTM along the sentences of length seq_len
         embedded = concat.permute(2, 0, 1)  # dim: seq_len, batch_size, embedding_dim
         output, (hidden_state, cell_state)  = self.lstm(embedded) 
 
-        # hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
-        #hidden = [batch size, lstm_hidden_dim * num directions]
-        attn_output, attn_weights = self.attention_net(output)
-        hidden = self.dropout(attn_output)
+        if self.attention:
+            attn_output, attn_weights = self.attention_net(output)
+            hidden = self.dropout(attn_output)
+        else:
+            hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
+            #hidden = [batch size, lstm_hidden_dim * num directions]
 
         return self.fc(hidden) # dim: batch_size x num_tags
 
