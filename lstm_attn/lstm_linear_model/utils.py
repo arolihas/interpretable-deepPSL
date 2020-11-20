@@ -187,8 +187,8 @@ import time
 # import imgkit
 import pandas as pd
 
-def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False):
-    output, attn_weights = model(sequence)
+def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False, permute=False):
+    output, attn_weights = model(sequence, random=random, permute=permute)
 
     classes = list(data_loader.tag_map.keys())
     true_label = label.tolist()[0]
@@ -196,14 +196,6 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
 
     sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
     attn_weights = np.array(attn_weights.squeeze().tolist())
-    if random:
-        attn_weights = np.random.rand(len(sequence))
-        # softmax
-        exp = np.exp(attn_weights)
-        bot = np.sum(exp)
-        # print(attn_weights)
-        attn_weights = exp/bot
-        # print(attn_weights)
 
     sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
     predicted_label = classes[sm.argmax().item()]
@@ -215,8 +207,7 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
     # print(attn_weights[:10])
     mean, std = attn_weights.mean(), attn_weights.std()
     indices = np.where(attn_weights > (mean + 2*std))[0]
-    # print("indices", indices)
-    # TODO: combine contiguous ones better
+
     allseqs = []
     cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
     for idx in indices:
@@ -227,12 +218,37 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
         
         subseq = ''.join(sequence[left:right])
         allseqs.append([left, right, subseq, predicted_label, true_label, correct, sampleIdx])
-    allseqs = pd.DataFrame(allseqs, columns=cols)
+    # print(pd.DataFrame(allseqs, columns=cols))
+    newSeqs = []
+    i = 0
+    while i < len(allseqs):
+        row = allseqs[i]
+        newSeqRow = row
+        currleft = row[0]
+        currright = row[1]
+        j = i + 1
+        if j < len(allseqs):
+            nextLeft = allseqs[j][0]
+        else:
+            newSeqs.append(row)
+            break
+        while nextLeft < currright and j < len(allseqs) - 1:
+            j += 1
+            nextLeft = allseqs[j][0]
+        newRight = allseqs[j-1][1]
+        newSeqRow[1] = newRight
+        newSeqRow[2] = ''.join(sequence[currleft : newRight])
+        newSeqs.append(newSeqRow)
+        i = j
+
+    allseqs = pd.DataFrame(newSeqs, columns=cols)
+    # print(pd.DataFrame(allseqs, columns=cols))
+
     return allseqs
 
 
 
-def visualize(model, sequence, label, data_loader, view_browser=True):
+def visualize(model, sequence, label, data_loader, view_browser=True, random=False):
     """
     expects sequence to be batch size 1
     """
@@ -241,7 +257,7 @@ def visualize(model, sequence, label, data_loader, view_browser=True):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-    output, attn_weights = model(sequence)
+    output, attn_weights = model(sequence, random=random)
 
     classes = list(data_loader.tag_map.keys())
     true_label = label.tolist()[0]
@@ -260,7 +276,12 @@ def visualize(model, sequence, label, data_loader, view_browser=True):
     result += f'<br>True label = {true_label}<br>'
     result += map_sentence_to_color(sequence, attn_weights)
     
+    visdir = "vis" if not random else "vis_random"
+    if not os.path.exists(visdir):
+        os.makedirs(visdir)
+
     fname = time.strftime("%Y-%m-%d-%H.%M.%S_"+str(predicted_label == true_label) + ".html")
+    fname = os.path.join(visdir, fname)
     with open(fname, 'w') as f:
         f.write(result)
     
