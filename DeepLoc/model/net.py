@@ -25,8 +25,8 @@ class Net(nn.Module):
         self.attention = Attention(512)
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
-        self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).cuda())
-        self.u_omega = Variable(torch.zeros(self.attention_size).cuda())
+        self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size))#.cuda())
+        self.u_omega = Variable(torch.zeros(self.attention_size))#.cuda())
        
     def attention_net(self, lstm_output):
         output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
@@ -40,7 +40,7 @@ class Net(nn.Module):
 
         #alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
         #print(alphas_reshape.size()) = (batch_size, squence_length, 1)
-        alphas_reshape = torch.ones(batch_size, sequence_length, 1).cuda()
+        alphas_reshape = torch.ones(batch_size, sequence_length, 1)#.cuda()
         state = lstm_output.permute(1, 0, 2)
         #print(state.size()) = (batch_size, squence_length, hidden_size*layer_size)
 
