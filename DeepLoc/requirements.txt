@@ -4,3 +4,4 @@ torch>=0.3
 tabulate
 tqdm
 Bio
+pytorch-nlp

@@ -3,3 +3,4 @@
 __pycache__/*
 tutorial/.vscode/*
 .vscode/
+DeepLoc/uniprot_sprot.dat
