@@ -23,3 +23,8 @@ Attention visualization + deconvolution if needed
 
 FRESH https://arxiv.org/abs/2005.00115
 
+**Deliverables**
+
+Presentation https://docs.google.com/presentation/d/1-qk5zt8Ci-8k-OinnM0WFir8EePpYL7E1R5Sh2ktiT4/edit?usp=sharing
+
+Paper https://www.overleaf.com/2423619642twtsrxpsfhpm
