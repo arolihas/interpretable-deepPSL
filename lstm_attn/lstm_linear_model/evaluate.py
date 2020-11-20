@@ -9,7 +9,7 @@ import torch
 import utils
 import model.net as net
 from model.data_loader import DataLoader
-
+import pandas as pd
 from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
@@ -18,6 +18,34 @@ parser.add_argument('--model_dir', default='experiments', help="Directory contai
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 parser.add_argument('--visualize', default=False, help="vis ?", action="store_true")
+parser.add_argument('--subsequence', default=False, help="vis ?", action="store_true")
+
+
+
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps):
+    model.eval()
+
+    sequences = pd.DataFrame()
+
+    for i in range(num_steps):
+        try:
+            data_batch, labels_batch = next(data_iterator)
+            # print(data_batch.shape)
+            # print(labels_batch.shape)
+            # print(data_batch[0])
+            out = utils.get_subsequences(model, data_batch, labels_batch, data_loader, i, before_after=2, random=True)
+            sequences = sequences.append(out)
+
+            if (i % 100) == 0: print(i)
+            # print(sequences)
+            # sequences += out
+            # exit()
+            # _ = input("ENTER to continue")
+        except Exception as e:
+            print(i)
+            print(e)
+    sequences.to_csv('above_top2std_subsequences_testData.csv', index=False)
+
 
 def visualize(model, data_loader, data_iterator, metrics, params, num_steps):
     """
@@ -111,7 +139,7 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # load data
-    if args.visualize: params.batch_size = 1
+    if args.visualize or args.subsequence: params.batch_size = 1
     data_loader = DataLoader(args.data_dir, params)
     data = data_loader.load_data(['test'], args.data_dir)
     test_data = data['test']
@@ -136,6 +164,8 @@ if __name__ == '__main__':
     num_steps = (params.test_size + 1) // params.batch_size
     if args.visualize:
         visualize(model, data_loader, test_data_iterator, metrics, params, num_steps)
+    elif args.subsequence:
+        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps)
     else:
         # Evaluate
         test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps)

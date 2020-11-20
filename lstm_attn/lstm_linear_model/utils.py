@@ -184,7 +184,53 @@ def bar_chart(categories, scores, graph_title="Prediction", output_name="predict
     plt.savefig(output_name)
 
 import time
-import imgkit
+# import imgkit
+import pandas as pd
+
+def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False):
+    output, attn_weights = model(sequence)
+
+    classes = list(data_loader.tag_map.keys())
+    true_label = label.tolist()[0]
+    true_label = classes[true_label]
+
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = np.array(attn_weights.squeeze().tolist())
+    if random:
+        attn_weights = np.random.rand(len(sequence))
+        # softmax
+        exp = np.exp(attn_weights)
+        bot = np.sum(exp)
+        # print(attn_weights)
+        attn_weights = exp/bot
+        # print(attn_weights)
+
+    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    predicted_label = classes[sm.argmax().item()]
+
+    correct = predicted_label == true_label
+    # print("predicted", predicted_label, "| true", true_label, "|", correct)
+
+    # print(attn_weights.shape)
+    # print(attn_weights[:10])
+    mean, std = attn_weights.mean(), attn_weights.std()
+    indices = np.where(attn_weights > (mean + 2*std))[0]
+    # print("indices", indices)
+    # TODO: combine contiguous ones better
+    allseqs = []
+    cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
+    for idx in indices:
+        left = idx - before_after
+        if left < 0: left = 0
+        right = idx + before_after + 1
+        if right > len(sequence): right = len(sequence)
+        
+        subseq = ''.join(sequence[left:right])
+        allseqs.append([left, right, subseq, predicted_label, true_label, correct, sampleIdx])
+    allseqs = pd.DataFrame(allseqs, columns=cols)
+    return allseqs
+
+
 
 def visualize(model, sequence, label, data_loader, view_browser=True):
     """
