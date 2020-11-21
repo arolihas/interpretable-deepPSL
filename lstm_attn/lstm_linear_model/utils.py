@@ -163,7 +163,7 @@ def map_sentence_to_color(sequence, attn_weights):
     result = ''
     for word, score in zip(sequence, attn_weights):
         color = matplotlib.colors.rgb2hex(wordmap(score)[:3])
-        result += template.format(color, '&nbsp' + word + '&nbsp')
+        result += template.format(color, '&nbsp' + word + '&nbsp') + ' '
     return result
 
 
@@ -232,8 +232,10 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
         else:
             newSeqs.append(row)
             break
-        while nextLeft < currright and j < len(allseqs) - 1:
+        while nextLeft < currright:
+            currright = allseqs[j][1]
             j += 1
+            if j >= len(allseqs): break
             nextLeft = allseqs[j][0]
         newRight = allseqs[j-1][1]
         newSeqRow[1] = newRight
@@ -255,14 +257,74 @@ def getname(random, permute, result, dir=""):
             vistype += "_random"
         if permute:
             vistype += "_permute"
-    prefix = time.strftime("%Y-%m-%d-%H.%M.%S_")+str(predicted_label == true_label)+vistype
-    fname = prefix + ".html"
-    predfile = f'{prefix}_pred.html'
+    prefix = time.strftime("%Y-%m-%d-%H.%M.%S_")+str(result)+vistype
+    html_path = prefix + ".html"
+    pred_file = pred_path = f'{prefix}_pred.png'
     if dir != "":
         if not os.path.exists(dir): os.makedirs(dir)
-        fname = os.path.join(dir, fname)
-        predfile = os.path.join(dir, predfile)
-    return prefix, fname, predfile
+        html_path = os.path.join(dir, html_path)
+        pred_path = os.path.join(dir, pred_file)
+    return prefix, html_path, pred_path, pred_file
+
+html_str = """<html>
+<head>
+<style>
+div.gallery {
+  margin: 5px;
+  border: 1px solid #ccc;
+  float: left;
+  width: 180px;
+}
+
+div.gallery:hover {
+  border: 1px solid #777;
+}
+
+div.gallery img {
+  width: 100%;
+  height: auto;
+}
+
+div.desc {
+  padding: 15px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+"""
+
+html_end = """</body>
+</html>
+"""
+
+def getImgDiv(imgFile, desc):
+    html_div = """
+    <div class="gallery">
+    <a target="_blank" href="{}">
+        <img src="{}" alt="Cinque Terre" width="600" height="400">
+    </a>
+    <div class="desc">{}</div>
+    </div>
+    """.format(imgFile, imgFile, desc)
+    # print(html_div)
+    # exit()
+    return html_div
+
+def runModel(model, sequence, label, data_loader, random=False, permute=False):
+    """
+    label: true label
+    """
+    output, attn_weights = model(sequence, random=radom, permute=permute)
+    classes = list(data_loader.tag_map.keys())
+    true_label = label.tolist()[0]
+    true_label = classes[true_label]
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = attn_weights.squeeze().tolist()
+    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    predicted_label = classes[sm.argmax().item()]
+
+    return output, attn_weights, predicted_label, true_label
 
 
 def visualize(model, sequence, label, data_loader, view_browser=True, random=False, permute=False):
@@ -273,28 +335,33 @@ def visualize(model, sequence, label, data_loader, view_browser=True, random=Fal
     assert sequence.shape[0] == 1 and label.shape[0] == 1, "visualizing sequence should be batch size 1"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    output, attn_weights = model(sequence, random=random)
+    output, attn_weights, predicted_label, true_label = runModel(model, sequence, label, data_loader, random=False, permute=False)
 
-    classes = list(data_loader.tag_map.keys())
-    true_label = label.tolist()[0]
-    true_label = classes[true_label]
+    # output, attn_weights = model(sequence, random=random)
 
-    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
-    attn_weights = attn_weights.squeeze().tolist()
+    # classes = list(data_loader.tag_map.keys())
+    # true_label = label.tolist()[0]
+    # true_label = classes[true_label]
+
+    # sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    # attn_weights = attn_weights.squeeze().tolist()
     # attn_weights = np.random.rand(len(sequence))
-    result = "<h2>Attention Visualization</h2>"
+    result = html_str
+    result += "<h2>Attention Visualization</h2>"
     sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
     # print(sm.argmax().item())
     predicted_label = classes[sm.argmax().item()]
-    prefix, fname, predfile = getname(random, permute, predicted_label == true_label, dir="vis")
+    prefix, fname, pred_path, predfile = getname(random, permute, predicted_label == true_label, dir="vis")
 
-    bar_chart(classes, sm, 'Prediction', output_name=predfile)
-    result += f'<br><img src="{predfile}.png"><br>'
-    result += f'<br>Prediction = {predicted_label}<br>'
-    result += f'<br>True label = {true_label}<br>'
-    result += map_sentence_to_color(sequence, attn_weights)
+    bar_chart(classes, sm, 'Prediction', output_name=pred_path)
+    # result += f'<br><img src="{predfile}.png"><br>'
+    desc = f'<br>Prediction = {predicted_label}<br>'
+    desc += f'<br>True label = {true_label}<br>'
+    desc += map_sentence_to_color(sequence, attn_weights)
+    result += getImgDiv(predfile, desc)
 
-    
+    result += html_end
+
     with open(fname, 'w') as f:
         f.write(result)
     

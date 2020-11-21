@@ -38,11 +38,10 @@ def get_subsequences(model, data_loader, data_iterator, metrics, params, num_ste
             # print(labels_batch.shape)
             # print(data_batch[0])
             out = utils.get_subsequences(model, data_batch, labels_batch, data_loader, i, before_after=before_after, random=random, permute=permute)
+            # print(out)
             sequences = sequences.append(out)
 
-            if (i % 100) == 0: print(i)
-            # print(sequences) 
-            # sequences += out
+            # if (i % 100) == 0: print(i)
             # exit()
             # _ = input("ENTER to continue")
         except Exception as e:
