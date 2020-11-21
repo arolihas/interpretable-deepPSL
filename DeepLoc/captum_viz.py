@@ -4,7 +4,7 @@ import utils
 import model.net as net
 from model.data_loader import DataLoader
 from torch import device as dev
-from captum.attr import LayerIntegratedGradients, TokenReferenceBase, visualization
+from captum.attr import LayerIntegratedGradients, LayerFeatureAblation, Saliency, TokenReferenceBase, visualization
 
 MODEL_DIR = 'experiments/base_model/'
 DATA_DIR = 'data/'
@@ -42,17 +42,22 @@ token_reference = TokenReferenceBase(reference_token_idx=loader.pad_ind)
 layer_ig = LayerIntegratedGradients(model, model.embedding)
 vis_data_records = []
 
-def interpret_sequence(model, sentences, data, records):
+def interpret_sequence(model, sentences, data, attribution, records):
     model.zero_grad()
     for i, sentence in enumerate(sentences):
         seq_len = len(data[i])
+        inp = data[i].unsqueeze(0)
         reference_indices = token_reference.generate_reference(seq_len, device=dev('cpu')).unsqueeze(0)
-        pred = torch.sigmoid(model(data[i].unsqueeze(0)))
+        pred = torch.sigmoid(model(inp))
         prob = pred.max().item()
         pred_ind = round(pred.argmax().item()) 
-        attributions_ig, delta = layer_ig.attribute(data[i].unsqueeze(0), reference_indices, n_steps=500, return_convergence_delta=True, target=label_batch[i])
+        if type(attribution) == LayerIntegratedGradients:
+            attributions, delta = attribution.attribute(inp, reference_indices, n_steps=500, return_convergence_delta=True, target=label_batch[i])
+        elif type(attribution) == Saliency:
+            attributions = attribution.attribute(inp.long(), label_batch[i].long())
+            delta = -1
         print('pred: ', classes[pred_ind], '(', '%.2f'%prob ,')', ', delta: ', abs(delta.numpy()[0]))
-        add_attr_viz(attributions_ig, sentence, prob, pred_ind, label_batch[i], delta, records)
+        add_attr_viz(attributions, sentence, prob, pred_ind, label_batch[i], delta, records)
 
 def add_attr_viz(attributions, text, pred, pred_ind, label, delta, vis_data_records):
     attributions = attributions.sum(dim=2).squeeze(0)
@@ -70,3 +75,7 @@ def add_attr_viz(attributions, text, pred, pred_ind, label, delta, vis_data_reco
 
 # interpret_sequence(model, sentences[:5], train_batch, vis_data_records)
 # visualization.visualize_text(vis_data_records)
+def ablate(data, target, ablator):
+    inp = data.unsqueeze(0)
+    attributions = ablator.attribute(inp.long(), target=target.long())
+    return attributions
