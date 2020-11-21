@@ -40,12 +40,3 @@ def parse_subseqs(filepath, filename, use_k_set=False):
     global_val = pd.concat(global_vals)
     global_val.to_csv(filepath+'vals_{}'.format(filename), index=False)
     return np.mean(hitrates), np.sum(hitrates)
-
-PATH_DIR = '../lstm_attn/lstm_linear_model/'
-attn = 'above_top2std_subsequences_testData_avgLens5.csv'
-rand = 'random_above_top2std_subsequences_testData_avgLens5.csv'
-perm = 'permute_above_top2std_subsequences_testData_avgLens5.csv'
-
-# print('model ', parse_subseqs(PATH_DIR, attn))
-# print('permuted ', parse_subseqs(PATH_DIR, perm, use_k_set=True))
-print('random ', parse_subseqs(PATH_DIR, rand))
