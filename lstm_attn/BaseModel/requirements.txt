@@ -1,0 +1,14 @@
+numpy
+Pillow
+torch==1.7.0
+torchvision==0.8.1
+tabulate
+tqdm
+# previously `Bio` didn't seem to work. Tried `biopython`: https://stackoverflow.com/a/63112976/7303112) - worked!
+BioPython 
+# need this for Hao's Attention implementation
+pytorch-nlp 
+# for visualization
+matplotlib
+# to store subsequences to file
+pandas
