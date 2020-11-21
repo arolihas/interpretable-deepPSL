@@ -23,6 +23,7 @@ class Net(nn.Module):
                     dropout=params.dropout)
         self.dropout = nn.Dropout(params.dropout)
         self.attention = Attention(512)
+        self.use_attention = params.attn
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
         self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size))#.cuda())
@@ -58,10 +59,12 @@ class Net(nn.Module):
         #output dim: seq_len, batch_size, num_directions*hidden_size
         #hidden_state dim: num_layers*num_directions, batch_size, hidden_size
         #-----------------using attention layer---------------------
-        attn_output = self.attention_net(output)
-        hidden = self.dropout(attn_output)
+        if self.use_attention:
+            attn_output = self.attention_net(output)
+            hidden = self.dropout(attn_output)
         #----------------without attention---------------------  
-        #hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
+        else:
+            hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
         #hidden = [batch size, lstm_hidden_dim * num directions]
 
 

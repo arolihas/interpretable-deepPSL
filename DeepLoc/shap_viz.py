@@ -27,8 +27,7 @@ train_batch, _ = next(train_data_iterator)
 val_data = data['val']
 val_data_iterator = data_loader.data_iterator(val_data, params, shuffle=False)
 val_batch, _ = next(val_data_iterator)
-
-explainer = shap.DeepExplainer(model, train_batch[:100])
+explainer = shap.KernelExplainer(model.forward, train_batch[:1])
 vals = train_batch[:10]
 
 shap_values = explainer.shap_values(train_batch[:10])
