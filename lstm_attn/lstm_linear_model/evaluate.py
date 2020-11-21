@@ -224,7 +224,7 @@ if __name__ == '__main__':
     if args.visualize:
         visualize(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random)
     elif args.subsequence:
-        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random)
+        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute)
     else:
         # Evaluate
         test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute)

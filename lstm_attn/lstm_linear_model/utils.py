@@ -1,3 +1,7 @@
+import webbrowser
+import numpy as np
+import time
+import pandas as pd
 import json
 import logging
 import os
@@ -162,9 +166,6 @@ def map_sentence_to_color(sequence, attn_weights):
         result += template.format(color, '&nbsp' + word + '&nbsp')
     return result
 
-import webbrowser
-import os
-import numpy as np
 
 def bar_chart(categories, scores, graph_title="Prediction", output_name="prediction_bar_chart.png"):
     y_pos = range(len(categories))
@@ -183,9 +184,8 @@ def bar_chart(categories, scores, graph_title="Prediction", output_name="predict
 
     plt.savefig(output_name)
 
-import time
+
 # import imgkit
-import pandas as pd
 
 def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False, permute=False):
     output, attn_weights = model(sequence, random=random, permute=permute)
@@ -246,16 +246,32 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
 
     return allseqs
 
+def getname(random, permute, result, dir=""):
+    if not random and not permute:
+        vistype = "_regular"
+    else:
+        vistype = ""
+        if random:
+            vistype += "_random"
+        if permute:
+            vistype += "_permute"
+    prefix = time.strftime("%Y-%m-%d-%H.%M.%S_")+str(predicted_label == true_label)+vistype
+    fname = prefix + ".html"
+    predfile = f'{prefix}_pred.html'
+    if dir != "":
+        if not os.path.exists(dir): os.makedirs(dir)
+        fname = os.path.join(dir, fname)
+        predfile = os.path.join(dir, predfile)
+    return prefix, fname, predfile
 
 
-def visualize(model, sequence, label, data_loader, view_browser=True, random=False):
+def visualize(model, sequence, label, data_loader, view_browser=True, random=False, permute=False):
     """
     expects sequence to be batch size 1
     """
     print("Visualizing...")
     assert sequence.shape[0] == 1 and label.shape[0] == 1, "visualizing sequence should be batch size 1"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
     output, attn_weights = model(sequence, random=random)
 
@@ -270,18 +286,15 @@ def visualize(model, sequence, label, data_loader, view_browser=True, random=Fal
     sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
     # print(sm.argmax().item())
     predicted_label = classes[sm.argmax().item()]
-    bar_chart(classes, sm, 'Prediction')
-    result += '<br><img src="prediction_bar_chart.png"><br>'
+    prefix, fname, predfile = getname(random, permute, predicted_label == true_label, dir="vis")
+
+    bar_chart(classes, sm, 'Prediction', output_name=predfile)
+    result += f'<br><img src="{predfile}.png"><br>'
     result += f'<br>Prediction = {predicted_label}<br>'
     result += f'<br>True label = {true_label}<br>'
     result += map_sentence_to_color(sequence, attn_weights)
-    
-    visdir = "vis" if not random else "vis_random"
-    if not os.path.exists(visdir):
-        os.makedirs(visdir)
 
-    fname = time.strftime("%Y-%m-%d-%H.%M.%S_"+str(predicted_label == true_label) + ".html")
-    fname = os.path.join(visdir, fname)
+    
     with open(fname, 'w') as f:
         f.write(result)
     
