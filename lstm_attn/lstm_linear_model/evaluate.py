@@ -25,7 +25,7 @@ parser.add_argument('--permute', default=False, help="permute attention weights"
 
 model_dir = None
 
-def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, random=False, permute=False, before_after=2):
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, random=False, permute=False, before_after=1):
     model.eval()
 
     sequences = pd.DataFrame()
@@ -48,7 +48,7 @@ def get_subsequences(model, data_loader, data_iterator, metrics, params, num_ste
             print(i)
             print(e)
             # die()
-    fname = 'above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
+    fname = 'above_top1std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
     if random:
         fname = "random_" + fname
     if permute:
@@ -70,14 +70,14 @@ def visualize(model, data_loader, data_iterator, metrics, params, num_steps, ran
     # call utils.visualize to visualize
     model.eval()
 
-    for _ in tqdm(range(num_steps)):
+    for i in tqdm(range(num_steps)):
         data_batch, labels_batch = next(data_iterator)
-        print(data_batch.shape)
-        print(labels_batch.shape)
+        # print(data_batch.shape)
+        # print(labels_batch.shape)
         # print(data_batch[0])
-        utils.visualize(model, data_batch, labels_batch, data_loader, random=random)
+        utils.visualize(model, data_batch, labels_batch, data_loader, i, view_browser=False)
         # exit()
-        _ = input("ENTER to continue")
+        # _ = input("ENTER to continue")
 
 
 

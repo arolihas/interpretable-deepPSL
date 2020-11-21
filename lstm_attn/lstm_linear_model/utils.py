@@ -154,10 +154,10 @@ def load_checkpoint(checkpoint, model, optimizer=None):
 def map_sentence_to_color(sequence, attn_weights):
     """untested with GPU, might need to move sentence and weights to cpu"""
     wordmap = matplotlib.cm.get_cmap('OrRd')
-    print(wordmap(attn_weights[0]))
-    print(sum(attn_weights))
-    print(max(attn_weights))
-    print(attn_weights[:5])
+    # print(wordmap(attn_weights[0]))
+    # print(sum(attn_weights))
+    # print(max(attn_weights))
+    # print(attn_weights[:5])
     # exit()
     template = '<span class="barcode"; style="color: black; background-color: {}">{}</span>'
     result = ''
@@ -184,6 +184,9 @@ def bar_chart(categories, scores, graph_title="Prediction", output_name="predict
 
     plt.savefig(output_name)
 
+    plt.clf()
+    plt.close()
+
 
 # import imgkit
 
@@ -206,7 +209,7 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
     # print(attn_weights.shape)
     # print(attn_weights[:10])
     mean, std = attn_weights.mean(), attn_weights.std()
-    indices = np.where(attn_weights > (mean + 2*std))[0]
+    indices = np.where(attn_weights > (mean + 1*std))[0]
 
     allseqs = []
     cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
@@ -248,7 +251,7 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
 
     return allseqs
 
-def getname(random, permute, result, dir=""):
+def getname(random, permute, result, sample_idx, dir=""):
     if not random and not permute:
         vistype = "_regular"
     else:
@@ -257,15 +260,18 @@ def getname(random, permute, result, dir=""):
             vistype += "_random"
         if permute:
             vistype += "_permute"
-    prefix = time.strftime("%Y-%m-%d-%H.%M.%S_")+str(result)+vistype
+    # prefix = time.strftime("%Y-%m-%d-%H.%M.%S_")+str(result)+vistype
+    prefix = f"{sample_idx}_{result}{vistype}"
     html_path = prefix + ".html"
-    pred_file = pred_path = f'{prefix}_pred.png'
+    pred_file = pred_path = os.path.join('pred', f'{prefix}_pred.png')
     if dir != "":
         if not os.path.exists(dir): os.makedirs(dir)
+        if not os.path.exists(os.path.join(dir, 'pred')): os.makedirs(os.path.join(dir, 'pred'))
         html_path = os.path.join(dir, html_path)
         pred_path = os.path.join(dir, pred_file)
     return prefix, html_path, pred_path, pred_file
 
+# div: https://www.w3schools.com/css/css_image_gallery.asp
 html_str = """<html>
 <head>
 <style>
@@ -273,7 +279,7 @@ div.gallery {
   margin: 5px;
   border: 1px solid #ccc;
   float: left;
-  width: 180px;
+  width: 30%;
 }
 
 div.gallery:hover {
@@ -302,7 +308,7 @@ def getImgDiv(imgFile, desc):
     html_div = """
     <div class="gallery">
     <a target="_blank" href="{}">
-        <img src="{}" alt="Cinque Terre" width="600" height="400">
+        <img src="{}" alt="Cinque Terre" width="800" height="800">
     </a>
     <div class="desc">{}</div>
     </div>
@@ -311,31 +317,30 @@ def getImgDiv(imgFile, desc):
     # exit()
     return html_div
 
-def runModel(model, sequence, label, data_loader, random=False, permute=False):
+def runModel(model, sequence, label, data_loader, scale_attn=100, random=False, permute=False):
     """
     label: true label
     """
-    output, attn_weights = model(sequence, random=radom, permute=permute)
+    output, attn_weights = model(sequence, random=random, permute=permute)
     classes = list(data_loader.tag_map.keys())
     true_label = label.tolist()[0]
     true_label = classes[true_label]
     sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
-    attn_weights = attn_weights.squeeze().tolist()
+    attn_weights = attn_weights.squeeze()
+    attn_weights = (attn_weights * scale_attn).tolist()
     sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
     predicted_label = classes[sm.argmax().item()]
 
-    return output, attn_weights, predicted_label, true_label
+    return output, attn_weights, predicted_label, true_label, classes, sm, sequence
 
 
-def visualize(model, sequence, label, data_loader, view_browser=True, random=False, permute=False):
+def visualize(model, sequence, label, data_loader, sample_idx, view_browser=True, random=False, permute=False):
     """
     expects sequence to be batch size 1
     """
-    print("Visualizing...")
+    # print("Visualizing...")
     assert sequence.shape[0] == 1 and label.shape[0] == 1, "visualizing sequence should be batch size 1"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    output, attn_weights, predicted_label, true_label = runModel(model, sequence, label, data_loader, random=False, permute=False)
 
     # output, attn_weights = model(sequence, random=random)
 
@@ -348,24 +353,29 @@ def visualize(model, sequence, label, data_loader, view_browser=True, random=Fal
     # attn_weights = np.random.rand(len(sequence))
     result = html_str
     result += "<h2>Attention Visualization</h2>"
-    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    # sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
     # print(sm.argmax().item())
-    predicted_label = classes[sm.argmax().item()]
-    prefix, fname, pred_path, predfile = getname(random, permute, predicted_label == true_label, dir="vis")
+    # predicted_label = classes[sm.argmax().item()]
+    random_params = [False, True, False]
+    permute_params = [False, False, True]
+    run_types = ['Regular Attention', 'Random Attention', 'Permuted Attention']
+    for random, permute, runType in zip(random_params, permute_params, run_types):
+        output, attn_weights, predicted_label, true_label, classes, sm, seq = runModel(model, sequence, label, data_loader, random=random, permute=permute)
+        prefix, fname, pred_path, predfile = getname(random, permute, predicted_label == true_label, sample_idx, dir="vis")
 
-    bar_chart(classes, sm, 'Prediction', output_name=pred_path)
-    # result += f'<br><img src="{predfile}.png"><br>'
-    desc = f'<br>Prediction = {predicted_label}<br>'
-    desc += f'<br>True label = {true_label}<br>'
-    desc += map_sentence_to_color(sequence, attn_weights)
-    result += getImgDiv(predfile, desc)
+        bar_chart(classes, sm, f'{runType} Prediction', output_name=pred_path)
+        # result += f'<br><img src="{predfile}.png"><br>'
+        # desc = f'<br>{runType}<br>'
+        desc = f'<br>Prediction = <b>{predicted_label}</b> | True label = <b>{true_label}</b><br><br>'
+        desc += map_sentence_to_color(seq, attn_weights)
+        result += getImgDiv(predfile, desc)
 
     result += html_end
 
     with open(fname, 'w') as f:
         f.write(result)
     
-    print("Saved html to", fname)
+    # print("Saved html to", fname)
     fname = 'file://'+os.getcwd()+'/'+fname
 
     if view_browser:
