@@ -10,3 +10,5 @@ BioPython
 pytorch-nlp 
 # for visualization
 matplotlib
+# to store subsequences to file
+pandas
