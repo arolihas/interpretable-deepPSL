@@ -10,7 +10,7 @@ import torch.optim as optim
 from tqdm import trange
 
 import utils
-import model.uniform_net as net
+import model.uniform_mlp as net
 from model.data_loader import DataLoader
 from evaluate import evaluate
 

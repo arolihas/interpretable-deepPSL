@@ -3,11 +3,12 @@
 import argparse
 import logging
 import os
-
+import pandas as pd
 import numpy as np
 import torch
 import utils
 import model.net as net
+from tqdm import tqdm
 from model.data_loader import DataLoader
 
 parser = argparse.ArgumentParser()
@@ -17,7 +18,7 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
                      containing weights to load")
 
 
-def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
+def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps, random=False, permute=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -34,9 +35,10 @@ def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
 
     # summary for current eval loop
     summ = []
+    reports = []
 
     # compute metrics over the dataset
-    for _ in range(num_steps):
+    for i in tqdm(range(num_steps)):
         # fetch the next evaluation batch
         data_batch, labels_batch = next(data_iterator)
         
@@ -51,14 +53,58 @@ def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
         # compute all metrics on this batch
         summary_batch = {metric: metrics[metric](output_batch, labels_batch)
                          for metric in metrics}
+        thisrep = net.report(output_batch, labels_batch)
+        reports.append(thisrep)
         summary_batch['loss'] = loss.item()#loss.data[0]
         summ.append(summary_batch)
+    
+    classes = [str(i) for i in range(10)]
+    # names of classes add (mapper)
+    extra = ['macro avg', 'micro avg', 'weighted avg']
+    measures = ['f1-score', 'precision', 'recall', 'support']
+    # initialize
+    report_dict = {}
+    for outkey in classes + extra:
+        report_dict[outkey] = dict()
+        for measure in measures:
+            report_dict[outkey][measure] = 0.0
+    import pprint
+    # print(report_dict)
+    pp = pprint.PrettyPrinter(indent=4)
+    # pp.pprint(rep) 
+    # exit()
+    # sum them
+    for rep in reports:
+        for k,dic in rep.items():
+            for m, val in dic.items():
+                report_dict[k][m] += val # k and m should always be in report_dict
+    
+    # average them
+    total_batches = len(reports)
+    for k, dic in report_dict.items():
+        for m, val in dic.items():
+            if m not in measures[:-1]: continue
+            report_dict[k][m] /= total_batches
+    
+    report_df = pd.DataFrame(report_dict).transpose()
+    # clsf_report.to_csv('Your Classification Report Name.csv', index= True)
+    # pp.pprint(report_dict)
+    fname = "best_model"
+    if not random and not permute: fname += "_regular"
+    else:
+        if random: fname += "_random"
+        if permute: fname += "_permute"
+    print("------------", fname, "-------------")
+    #fname += ".csv"
+    print(report_df)
+    #report_df.to_csv(os.path.join(model_dir, fname))
 
     # compute mean of all metrics in summary
-    metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
+    metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
     logging.info("- Eval metrics : " + metrics_string)
     return metrics_mean
+
 
 
 if __name__ == '__main__':

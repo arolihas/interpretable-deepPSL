@@ -2,3 +2,15 @@
 2020-11-15 00:02:31,036:INFO: - done.
 2020-11-15 00:02:34,488:INFO: Starting training for 20 epoch(s)
 2020-11-15 00:02:34,488:INFO: Epoch 1/20
+2020-11-21 15:25:10,471:INFO: Loading the datasets...
+2020-11-21 15:25:10,954:INFO: - done.
+2020-11-21 15:25:15,079:INFO: Starting training for 20 epoch(s)
+2020-11-21 15:25:15,080:INFO: Epoch 1/20
+2020-11-21 15:26:41,108:INFO: Loading the datasets...
+2020-11-21 15:26:41,556:INFO: - done.
+2020-11-21 15:26:45,501:INFO: Starting training for 20 epoch(s)
+2020-11-21 15:26:45,501:INFO: Epoch 1/20
+2020-11-21 15:27:00,334:INFO: - Train metrics: accuracy: 0.290 ; f1_micro: 0.290 ; f1_macro: 0.184 ; precision: 0.290 ; recall: 0.290 ; loss: 24.970
+2020-11-21 15:27:01,817:INFO: - Eval metrics : accuracy: 0.380 ; f1_micro: 0.380 ; f1_macro: 0.271 ; precision: 0.380 ; recall: 0.380 ; loss: 2.693
+2020-11-21 15:27:01,820:INFO: - Found new best accuracy
+2020-11-21 15:27:01,821:INFO: Epoch 2/20

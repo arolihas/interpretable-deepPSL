@@ -82,6 +82,15 @@ class Net(nn.Module):
 def loss_fn(outputs, labels):
     return F.cross_entropy(outputs, labels)
     
+from sklearn.metrics import f1_score, precision_score, recall_score, classification_report
+
+def getpred(outputs):
+    outputs = np.argmax(outputs, axis=1)
+    return outputs
+    
+def loss_fn(outputs, labels):
+    return F.cross_entropy(outputs, labels)
+    
     
 def accuracy(outputs, labels):
     # reshape labels to give a flat vector of length batch_size*seq_len
@@ -93,9 +102,47 @@ def accuracy(outputs, labels):
     # compare outputs with labels and divide by number of tokens (excluding PADding tokens)
     return np.sum(outputs==labels)/float(len(labels))
 
+def f1_micro(outputs, labels):
+    labels = labels.ravel()
+    outputs = getpred(outputs)
+    return f1_score(labels, outputs, average='micro')
 
+def f1_macro(outputs, labels):
+    labels = labels.ravel()
+    outputs = getpred(outputs)
+    return f1_score(labels, outputs, average='macro')
+
+def precision(outputs, labels):
+    labels = labels.ravel()
+    outputs = getpred(outputs)
+
+    return precision_score(labels, outputs, average='micro')
+
+def recall(outputs, labels):
+    labels = labels.ravel()
+    outputs = getpred(outputs)
+
+    return recall_score(labels, outputs, average='micro')
+
+import pprint
+def report(outputs, labels):
+    labels = labels.ravel()
+    outputs = getpred(outputs)
+    # TODO: add `target=` argument with actual classnames
+    rep = classification_report(labels, outputs, output_dict=True)
+    pp = pprint.PrettyPrinter(indent=4)
+    # pp.pprint(rep) # pretty print?
+    # print(rep)
+    # exit()
+    return rep   
+    
 # maintain all metrics required in this dictionary- these are used in the training and evaluation loops
 metrics = {
     'accuracy': accuracy,
+    'f1_micro': f1_micro,
+    'f1_macro': f1_macro,
+    'precision': precision,
+    'recall': recall
+    
     # could add more metrics such as accuracy for each token type
 }
