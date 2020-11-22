@@ -145,8 +145,10 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     print("loading", checkpoint)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     checkpoint = torch.load(checkpoint, map_location=device)
-    model.load_state_dict(checkpoint['state_dict'])
-
+    try:
+        model.load_state_dict(checkpoint['state_dict'])
+    except:
+        model.load_state_dict(checkpoint['state_dict'], strict=False)
     if optimizer:
         optimizer.load_state_dict(checkpoint['optim_dict'])
     return checkpoint
@@ -209,7 +211,7 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
     # print(attn_weights.shape)
     # print(attn_weights[:10])
     mean, std = attn_weights.mean(), attn_weights.std()
-    indices = np.where(attn_weights > (mean + 1*std))[0]
+    indices = np.where(attn_weights > (mean + 2*std))[0]
 
     allseqs = []
     cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
