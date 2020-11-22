@@ -5,42 +5,45 @@ import model.net as net
 from model.data_loader import DataLoader
 from torch import device as dev
 from captum.attr import LayerIntegratedGradients, LayerFeatureAblation, Saliency, TokenReferenceBase, visualization
+from tqdm import tqdm, trange
+import os
 
-MODEL_DIR = 'experiments/base_model/'
-DATA_DIR = 'data/'
+DeepLocDir = os.path.dirname(os.path.realpath(__file__))
+MODEL_DIR = f'{DeepLocDir}/experiments/base_model/'
+DATA_DIR = f'{DeepLocDir}/data/'
 params = utils.Params(MODEL_DIR+'params.json')
 params.vocab_size = 25
 params.number_of_classes = 10
 params.cuda = torch.cuda.is_available()
 
-weights = MODEL_DIR + 'best.pth'
+# weights = MODEL_DIR + 'best.pth'
 classes = ['Extracellular', 'Plastid', 'Cytoplasm', 'Mitochondrion', 
 'Nucleus', 'ER', 'Golgi', 'Membrane', 'Lysosome', 'Peroxisome']
 
-model = net.Net(params).cuda() if params.cuda else net.Net(params)
-checkpoint = torch.load(weights, map_location=dev('cpu'))
-model.load_state_dict(checkpoint['state_dict'])
-model.eval()
+# model = net.Net(params).cuda() if params.cuda else net.Net(params)
+# checkpoint = torch.load(weights, map_location=dev('cpu'))
+# model.load_state_dict(checkpoint['state_dict'])
+# model.eval()
 
 loader = DataLoader(DATA_DIR, params)
-data = loader.load_data(['train', 'val'], DATA_DIR)
-train_data = data['train']
-train_data_iterator = loader.data_iterator(train_data, params, shuffle=False)
-train_batch, label_batch = next(train_data_iterator)
-sentences_file = DATA_DIR + 'train/sentences.txt'
-labels_file = DATA_DIR + 'train/labels.txt'
-sentences = []
-with open(sentences_file) as f:
-    for sent in f.read().splitlines():
-        sentences.append(sent)
-labels = []
-with open(labels_file) as f:
-    for lab in f.read().splitlines():
-        labels.append(lab)
+# data = loader.load_data(['train', 'val'], DATA_DIR)
+# train_data = data['train']
+# train_data_iterator = loader.data_iterator(train_data, params, shuffle=False)
+# train_batch, label_batch = next(train_data_iterator)
+# sentences_file = DATA_DIR + 'train/sentences.txt'
+# labels_file = DATA_DIR + 'train/labels.txt'
+# sentences = []
+# with open(sentences_file) as f:
+#     for sent in f.read().splitlines():
+#         sentences.append(sent)
+# labels = []
+# with open(labels_file) as f:
+#     for lab in f.read().splitlines():
+#         labels.append(lab)
 token_reference = TokenReferenceBase(reference_token_idx=loader.pad_ind)
 
-layer_ig = LayerIntegratedGradients(model, model.embedding)
-vis_data_records = []
+# layer_ig = LayerIntegratedGradients(model, model.embedding)
+# vis_data_records = []
 
 def interpret_sequence(model, sentences, data, attribution, records):
     model.zero_grad()
@@ -58,6 +61,41 @@ def interpret_sequence(model, sentences, data, attribution, records):
             delta = -1
         print('pred: ', classes[pred_ind], '(', '%.2f'%prob ,')', ', delta: ', abs(delta.numpy()[0]))
         add_attr_viz(attributions, sentence, prob, pred_ind, label_batch[i], delta, records)
+
+def interpret_sequence_copy(model, data_loader, data_iterator, attribution, records, num_steps, verbose=True):
+    """
+    copy to better handle data
+    """
+    model.zero_grad()
+    for n, param in model.named_parameters():
+        # param.requires_grad = True
+        print(n, param.requires_grad)
+    exit()
+
+    # t = trange(num_steps)
+    for i in range(num_steps):
+        if i > 2: break
+        if (i % 200) == 0:
+            print("Step", i, "/", num_steps)
+        data, label_batch = next(data_iterator)
+        for i in range(len(data)):
+            seq_len = len(data[i])
+            inp = data[i].unsqueeze(0)
+            sentence = [data_loader.idx_to_vocab[x] for x in inp.squeeze().tolist()]
+            reference_indices = token_reference.generate_reference(seq_len, device=dev('cpu')).unsqueeze(0)
+            pred = torch.sigmoid(model(inp))
+            prob = pred.max().item()
+            pred_ind = round(pred.argmax().item()) 
+            if type(attribution) == LayerIntegratedGradients:
+                # print(inp, label_batch[i])
+                # exit()
+                attributions, delta = attribution.attribute(inp, reference_indices, n_steps=50, return_convergence_delta=True, target=label_batch[i])
+            elif type(attribution) == Saliency:
+                attributions = attribution.attribute(inp.long(), label_batch[i].long())
+                delta = -1
+            # print("Sequence:", sentence)
+            if verbose: print('pred: ', classes[pred_ind], '(', '%.2f'%prob ,')', ', delta: ', abs(delta.numpy()[0]), ", true:", classes[label_batch[i]])
+            add_attr_viz(attributions, sentence, prob, pred_ind, label_batch[i], delta, records)
 
 def add_attr_viz(attributions, text, pred, pred_ind, label, delta, vis_data_records):
     attributions = attributions.sum(dim=2).squeeze(0)

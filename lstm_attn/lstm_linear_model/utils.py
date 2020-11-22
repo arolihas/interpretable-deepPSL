@@ -145,6 +145,9 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     print("loading", checkpoint)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     checkpoint = torch.load(checkpoint, map_location=device)
+    print("Model Summary")
+    print(model)
+    # print(checkpoint['state_dict'].keys())
     model.load_state_dict(checkpoint['state_dict'])
 
     if optimizer:
@@ -190,26 +193,14 @@ def bar_chart(categories, scores, graph_title="Prediction", output_name="predict
 
 # import imgkit
 
-def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False, permute=False):
-    output, attn_weights = model(sequence, random=random, permute=permute)
-
-    classes = list(data_loader.tag_map.keys())
-    true_label = label.tolist()[0]
-    true_label = classes[true_label]
-
-    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
-    attn_weights = np.array(attn_weights.squeeze().tolist())
-
-    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
-    predicted_label = classes[sm.argmax().item()]
-
+def _subseq(sequence, weights, top_std, predicted_label, true_label, before_after, sampleIdx):
     correct = predicted_label == true_label
     # print("predicted", predicted_label, "| true", true_label, "|", correct)
 
-    # print(attn_weights.shape)
-    # print(attn_weights[:10])
-    mean, std = attn_weights.mean(), attn_weights.std()
-    indices = np.where(attn_weights > (mean + 1*std))[0]
+    # print(weights.shape)
+    # print(weights[:10])
+    mean, std = weights.mean(), weights.std()
+    indices = np.where(weights > (mean + top_std*std))[0]
 
     allseqs = []
     cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
@@ -248,6 +239,25 @@ def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_afte
 
     allseqs = pd.DataFrame(newSeqs, columns=cols)
     # print(pd.DataFrame(allseqs, columns=cols))
+    return allseqs
+
+# def get_subsequence_nonattn():
+
+
+def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False, permute=False):
+    output, attn_weights = model(sequence, random=random, permute=permute)
+
+    classes = list(data_loader.tag_map.keys())
+    true_label = label.tolist()[0]
+    true_label = classes[true_label]
+
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = np.array(attn_weights.squeeze().tolist())
+
+    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    predicted_label = classes[sm.argmax().item()]
+
+    allseqs = _subseq(sequence, attn_weights, 2, predicted_label, true_label, before_after, sampleIdx)
 
     return allseqs
 
@@ -273,36 +283,36 @@ def getname(random, permute, result, sample_idx, dir=""):
 
 # div: https://www.w3schools.com/css/css_image_gallery.asp
 html_str = """<html>
-<head>
-<style>
-div.gallery {
-  margin: 5px;
-  border: 1px solid #ccc;
-  float: left;
-  width: 30%;
-}
+        <head>
+        <style>
+        div.gallery {
+        margin: 5px;
+        border: 1px solid #ccc;
+        float: left;
+        width: 30%;
+        }
 
-div.gallery:hover {
-  border: 1px solid #777;
-}
+        div.gallery:hover {
+        border: 1px solid #777;
+        }
 
-div.gallery img {
-  width: 100%;
-  height: auto;
-}
+        div.gallery img {
+        width: 100%;
+        height: auto;
+        }
 
-div.desc {
-  padding: 15px;
-  text-align: center;
-}
-</style>
-</head>
-<body>
-"""
+        div.desc {
+        padding: 15px;
+        text-align: center;
+        }
+        </style>
+        </head>
+        <body>
+        """
 
 html_end = """</body>
-</html>
-"""
+            </html>
+            """
 
 def getImgDiv(imgFile, desc):
     html_div = """
