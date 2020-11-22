@@ -22,12 +22,16 @@ parser.add_argument('--visualize', default=False, help="vis ?", action="store_tr
 parser.add_argument('--subsequence', default=False, help="vis ?", action="store_true")
 parser.add_argument('--random', default=False, help="randomize attention weights", action="store_true")
 parser.add_argument('--permute', default=False, help="permute attention weights", action="store_true")
+# parser.add_argument('--nonattn', default=False, help="to extract subsequence for non attention models", action="store_true")
 
 parser.add_argument('--fname', default='')
 
 model_dir = None
 
-def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, fname, random=False, permute=False, before_after=2):
+# def get_sahils(model, ):
+
+
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, random=False, permute=False, before_after=2):
     model.eval()
 
     sequences = pd.DataFrame()
@@ -40,17 +44,18 @@ def get_subsequences(model, data_loader, data_iterator, metrics, params, num_ste
             # print(labels_batch.shape)
             # print(data_batch[0])
             out = utils.get_subsequences(model, data_batch, labels_batch, data_loader, i, before_after=before_after, random=random, permute=permute)
-            # print(out)
+            print(out)
             sequences = sequences.append(out)
 
             # if (i % 100) == 0: print(i)
             # exit()
-            # _ = input("ENTER to continue")
+            _ = input("ENTER to continue")
         except Exception as e:
             print(i)
             print(e)
             # die()
-    fname = fname + '_above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
+    if not os.path.exists('subsequences'): os.makedirs('subsequences')
+    fname = 'subsequences/above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
     if random:
         fname = "random_" + fname
     if permute:
