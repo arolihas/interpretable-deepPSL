@@ -23,9 +23,11 @@ parser.add_argument('--subsequence', default=False, help="vis ?", action="store_
 parser.add_argument('--random', default=False, help="randomize attention weights", action="store_true")
 parser.add_argument('--permute', default=False, help="permute attention weights", action="store_true")
 
+parser.add_argument('--fname', default='')
+
 model_dir = None
 
-def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, random=False, permute=False, before_after=2):
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, fname, random=False, permute=False, before_after=2):
     model.eval()
 
     sequences = pd.DataFrame()
@@ -48,7 +50,7 @@ def get_subsequences(model, data_loader, data_iterator, metrics, params, num_ste
             print(i)
             print(e)
             # die()
-    fname = 'uniform_above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
+    fname = fname + '_above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
     if random:
         fname = "random_" + fname
     if permute:
@@ -223,7 +225,7 @@ if __name__ == '__main__':
     if args.visualize:
         visualize(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random)
     elif args.subsequence:
-        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute)
+        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute, fname=args.fname)
     else:
         # Evaluate
         test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute)
