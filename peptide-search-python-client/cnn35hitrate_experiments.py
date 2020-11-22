@@ -18,7 +18,7 @@ cnn_lstm_perm = 'permute_above_top2std_subsequences_testData_avgLens5.csv'
 # cnn_lstm_rand = 'random_cnn35711a_above_top2std_subsequences_testData_avgLens5.csv'
 # cnn_lstm_perm = 'permute_cnn35711a_above_top2std_subsequences_testData_avgLens5.csv'
 
-# print('model ', parse_subseqs(PATH_DIR, cnn_lstm_attn))
+print('model ', parse_subseqs(PATH_DIR, cnn_lstm_attn))
 print('permuted ', parse_subseqs(PATH_DIR, cnn_lstm_perm))
 print('random ', parse_subseqs(PATH_DIR, cnn_lstm_rand))
 

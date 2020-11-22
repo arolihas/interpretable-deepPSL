@@ -61,7 +61,7 @@ def hitrate(proteins, indexes, subclass):
     df = pd.DataFrame(vals, columns=columns)
     return (hitrate, df)
 
-nominal_set = {'Mitochondrion', 'Peroxisome', 'Plastid', 'Cytoplasm', 'Extracellular'}
+nominal_set = {'Mitochondrion', 'Peroxisome', 'Plastid', 'Cytoplasm'}
 nuclear_list = ['Nucleus', 'Chromosome', 'nucleus']
 er_list = ['Endoplasmic reticulum', 'endoplasmic reticulum', 'Microsome', 'Sarcoplasmic reticulum']
 golgi_list = ['Golgi apparatus', 'golgi apparatus']
@@ -73,7 +73,8 @@ extra_set = {
     'Endoplasmic.reticulum': er_list,
     'Golgi.apparatus': golgi_list,
     'Cell.membrane': membrane_list,
-    'Lysosome/Vacuole': lyso_list
+    'Lysosome/Vacuole': lyso_list,
+    'Extracellular': ['Extracellular', 'Secreted']
 }
 
 def determine_locations(subcell, subclass):

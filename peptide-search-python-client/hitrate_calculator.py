@@ -10,7 +10,7 @@ def parse_subseqs(filepath, filename, use_k_set=False):
     subtp = subs[subs.classification]
     input_seqs = np.unique(subtp.inputSequence)
     global ks
-    period = 200 # max(subtp.inputSequence)
+    period = 100 # max(subtp.inputSequence)
     hitrates = []
     global_vals = []
     if not use_k_set:
