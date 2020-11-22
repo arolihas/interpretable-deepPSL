@@ -13,7 +13,7 @@ def parse_subseqs(filepath, filename, use_k_set=False):
     period = 200 # max(subtp.inputSequence)
     hitrates = []
     global_vals = []
-    if ks == {}:
+    if not use_k_set:
         k = 0
     for i in tqdm(range(0,period)):
         if not use_k_set:

@@ -8,11 +8,14 @@ import pandas as pd
 
 def peptide_search(peptides, swissprot=True, isoform=True):
     api_instance = swagger_client.PeptideMatchAPI20Api()
-    try:
-        # Do peptide match using GET method. Default taxonomic ids human and mice
-        api_response = api_instance.match_get_get(peptides, swissprot=swissprot, isoform=isoform)
-    except ApiException as e:
-        print("Exception when calling PeptideMatchAPI20Api->match_get_get: %s\n" % e)
+    api_response = None
+    while api_response == None:
+        try:
+            # Do peptide match using GET method. Default taxonomic ids human and mice
+            api_response = api_instance.match_get_get(peptides, swissprot=swissprot, isoform=isoform)
+        except ApiException as e:
+            print("Exception when calling PeptideMatchAPI20Api->match_get_get: %s\n" % e)
+            return None
     return api_response.results[0].proteins
 
 def hitrate(proteins, indexes, subclass):
@@ -20,35 +23,36 @@ def hitrate(proteins, indexes, subclass):
     u = UniProt()
     match, total = 0,0
     dl_peptides, dl_starts, dl_ends, sprot_starts, sprot_ends, sprot_locs =[], [], [], [], [], []
-    for prot in proteins:
-        locs = None
-        try:
-            entry = u.retrieve(prot.ac, frmt='xml')
-            locs = entry['subcellularlocation']
-        except:
-            continue
-        if locs:
-            pep_metadata = prot.matching_peptide[0]
-            seq_range = pep_metadata.match_range[0]
-            peptide = pep_metadata.peptide
-            dl_peptides.append(peptide)
-            start, end = indexes[peptide]
-            dl_starts.append(start)
-            dl_ends.append(end)
-            
-            pos = seq_range.start
-            sprot_starts.append(pos)
-            sprot_ends.append(seq_range.end)
-            
-            seq_len = seq_range.end - pos
-            offset_weight = 1 if pos == start else min(abs(seq_len / (pos - start)), 1) 
-            
-            loc = list((locs[0].children))[1].string
-            sprot_locs.append(loc)
-            match_weight = determine_locations(loc, subclass) * offset_weight
-            match += match_weight
-            # assert(match_weight <= 1),'match_weight {}'.format(match_weight)
-            total += offset_weight
+    if proteins != None:
+        for prot in proteins:
+            locs = None
+            try:
+                entry = u.retrieve(prot.ac, frmt='xml')
+                locs = entry['subcellularlocation']
+            except:
+                continue
+            if locs:
+                pep_metadata = prot.matching_peptide[0]
+                seq_range = pep_metadata.match_range[0]
+                peptide = pep_metadata.peptide
+                dl_peptides.append(peptide)
+                start, end = indexes[peptide]
+                dl_starts.append(start)
+                dl_ends.append(end)
+                
+                pos = seq_range.start
+                sprot_starts.append(pos)
+                sprot_ends.append(seq_range.end)
+                
+                seq_len = seq_range.end - pos
+                offset_weight = 1 if pos == start else min(abs(seq_len / (pos - start)), 1) 
+                
+                loc = list((locs[0].children))[1].string
+                sprot_locs.append(loc)
+                match_weight = determine_locations(loc, subclass) * offset_weight
+                match += match_weight
+                # assert(match_weight <= 1),'match_weight {}'.format(match_weight)
+                total += offset_weight
     if total == 0:
         hitrate = 0
     else:
