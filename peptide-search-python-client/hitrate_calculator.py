@@ -3,9 +3,20 @@ import subseq_utils as su
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+import time
 
 ks = {}
+
+def print_elapsed_time(prefix=''):
+    e_time = time.time()
+    if not hasattr(print_elapsed_time, 's_time'):
+        print_elapsed_time.s_time = e_time
+    else:
+        print(f'{prefix} elapsed time: {e_time - print_elapsed_time.s_time:.2f} sec')
+        print_elapsed_time.s_time = e_time
+
 def parse_subseqs(filepath, filename, use_k_set=False, period=100):
+    print("Parsing:", filepath + filename)
     subs = pd.read_csv(filepath + filename)
     subtp = subs[subs.classification]
     input_seqs = np.unique(subtp.inputSequence)
@@ -15,7 +26,9 @@ def parse_subseqs(filepath, filename, use_k_set=False, period=100):
     global_vals = []
     if not use_k_set:
         k = 0
-    for i in tqdm(range(0,period)):
+    print_elapsed_time()
+    for i in range(0,period):
+        print_elapsed_time(f"Step {i}")
         if not use_k_set:
             while k in ks.values():
                 k = np.random.randint(0, len(input_seqs))
