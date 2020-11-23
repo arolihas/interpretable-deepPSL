@@ -7,6 +7,8 @@ from torch import device as dev
 from captum.attr import LayerIntegratedGradients, LayerFeatureAblation, Saliency, TokenReferenceBase, visualization
 from tqdm import tqdm, trange
 import os
+from time import time
+import datetime
 
 DeepLocDir = os.path.dirname(os.path.realpath(__file__))
 MODEL_DIR = f'{DeepLocDir}/experiments/base_model/'
@@ -62,6 +64,21 @@ def interpret_sequence(model, sentences, data, attribution, records):
         print('pred: ', classes[pred_ind], '(', '%.2f'%prob ,')', ', delta: ', abs(delta.numpy()[0]))
         add_attr_viz(attributions, sentence, prob, pred_ind, label_batch[i], delta, records)
 
+
+start = None
+def custom_estimate(itr, total):
+    global start
+    if start is None:
+        print("Initializing custom tqdm")
+        start = time()
+        return
+    elapsed = time() - start
+    frac_left = (total - itr)/itr
+    remaining = str(datetime.timedelta(seconds=elapsed*frac_left))
+    elapsed = str(datetime.timedelta(seconds=elapsed))
+    print(f"Step {itr}/{total} | elapsed: {elapsed} | estimate_remaining: {remaining}")
+    
+
 def interpret_sequence_copy(model, data_loader, data_iterator, attribution, records, num_steps, verbose=True):
     """
     copy to better handle data
@@ -76,7 +93,8 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
     for i in range(num_steps):
         # if i > 2: break
         if (i % 200) == 0:
-            print("Step", i, "/", num_steps)
+            # print("Step", i, "/", num_steps)
+            custom_estimate(i+1, num_steps)
         data, label_batch = next(data_iterator)
         for i in range(len(data)):
             seq_len = len(data[i])
