@@ -33,6 +33,7 @@ parser.add_argument('--captum_seq', default=False, help="to extract subsequences
 parser.add_argument('--attn', default=False, help="use attention version of base model", action='store_true')
 parser.add_argument('--seqmethod', default='intgrad', help="could be 'intgrad' or 'saliency'")
 parser.add_argument('--net', default='model.attn_lstm', help="set whichever module you're using")
+parser.add_argument('--mlp', default=False, action='store_true')
 # parser.add_argument
 
 attention_model = False
@@ -86,7 +87,7 @@ def _subseq(sequence, weights, top_std, predicted_label, true_label, before_afte
     # print(pd.DataFrame(allseqs, columns=cols))
     return allseqs
 
-def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps, before_after=2, top_std=2):
+def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps, before_after=2, top_std=2, mlp=False):
     """top_std : top 2:25 % sequences (weights > mean + top_std*std)
     """
     mod = "Base" if not attention_model else "Attn"
@@ -101,7 +102,7 @@ def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps,
     try:
         if seqmethod == 'intgrad':
             layer_ig = LayerIntegratedGradients(model, model.embedding)
-            interpret_sequence_copy(model, data_loader, data_iterator, layer_ig, vis_data_records, num_steps, verbose=False)
+            interpret_sequence_copy(model, data_loader, data_iterator, layer_ig, vis_data_records, num_steps, verbose=False, mlp=mlp)
         else:
             layer_sal = Saliency(model)
             interpret_sequence_copy(model, data_loader, data_iterator, layer_sal, vis_data_records, num_steps, verbose=True)
@@ -230,7 +231,7 @@ if __name__ == '__main__':
         params.attn = 1
         attention_model = True
     if args.captum_seq:
-        captum_subseq(model, data_loader, test_data_iterator, metrics, params, num_steps)
+        captum_subseq(model, data_loader, test_data_iterator, metrics, params, num_steps, mlp=args.mlp)
     else:
         test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps)
         save_path = os.path.join(args.model_dir, "metrics_test_{}_attn{}.json".format(args.restore_file, args.attn))
