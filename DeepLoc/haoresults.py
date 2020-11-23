@@ -9,7 +9,7 @@ with open(file) as f:
     allrows = []
     for line in f:
         line = line.split()
-        if len(line) = 0:
+        if len(line) == 0:
             continue
         elif len(line) == 6:
             line[0] = ' '.join(line[:2])
@@ -24,7 +24,9 @@ with open(file) as f:
                 line += (cols - len(line))*blank
             elif len(line) > 5:
                 line = line[:6]
-        blank = ['']
-        row = []
-        print(len(line), line)
-        _ = input("ENTER")
+        # print(len(line), line)
+        allrows.append(line)
+        # _ = input("ENTER")
+    df = pd.DataFrame(allrows)
+    print(df)
+    df.to_csv('haoresults.csv', index=False)

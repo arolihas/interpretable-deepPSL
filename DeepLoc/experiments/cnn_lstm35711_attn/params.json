@@ -10,5 +10,6 @@
     "save_summary_steps": 100,
     "attention": 1,
     "attention_type": "regular",
-    "attention_size": 512
+    "attention_size": 512,
+    "attn" : 1
 }
