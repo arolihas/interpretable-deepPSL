@@ -1,0 +1,2 @@
+subsequence,sprot_start,sprot_end,sprot_loc,dl_start,dl_end,dl_loc
+"['EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP', 'EAEEPP']","[694, 484, 2, 2, 402, 641, 217, 484, 484]","[699, 489, 7, 7, 407, 646, 222, 489, 489]","['Nucleus', 'Nucleus', 'Cell membrane', 'Cell membrane', 'Secreted', 'Cell projection', 'Mitochondrion outer membrane', 'Nucleus', 'Nucleus']","[1, 1, 1, 1, 1, 1, 1, 1, 1]","[7, 7, 7, 7, 7, 7, 7, 7, 7]",Cell.membrane

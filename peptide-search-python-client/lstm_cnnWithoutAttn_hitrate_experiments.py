@@ -20,13 +20,42 @@ PATH_DIR = '../DeepLoc/subsequences/'
 # out1 = parse_subseqs(PATH_DIR, cnn_lstm35711)
 # print("cnn_lstm35711", out1)
 
-cnn_lstm35711_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-AttnModel_intgradMethod.csv'
-out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_attn)
-print("cnn_lstm35711", out1)
+# cnn_lstm35711_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-AttnModel_intgradMethod.csv'
+# out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_attn)
+# print("cnn_lstm35711_attn", out1)
 
 # cnn_lstm = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm-BaseModel_intgradMethod.csv'
 # out = parse_subseqs(PATH_DIR, cnn_lstm)
 # print('cnn_lstm', out)
+
+# cnn_lstm_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm_attn-AttnModel_intgradMethod.csv'
+# out = parse_subseqs(PATH_DIR, cnn_lstm_attn)
+# print('cnn_lstm_attn', out)
+
+# cnn_lstm35711_inc = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-BaseModel_intgradMethod.csv'
+# out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_inc)
+# print("cnn_lstm35711_inc", out1)
+
+# cnn_lstm35711_attn_inc = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-AttnModel_intgradMethod.csv'
+# out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_attn_inc)
+# print("cnn_lstm35711_attn_inc", out1)
+
+# cnn_lstm_inc = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm-BaseModel_intgradMethod.csv'
+# out = parse_subseqs(PATH_DIR, cnn_lstm_inc)
+# print('cnn_lstm_inc', out)
+
+# cnn_lstm_attn_inc = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm_attn-AttnModel_intgradMethod.csv'
+# out = parse_subseqs(PATH_DIR, cnn_lstm_attn_inc)
+# print('cnn_lstm_attn_inc', out)
+
+PATH_DIR = '../lstm_attn/lstm_linear_model/subsequences/'
+# cnn_att = 'cnn35711a_above_top2std_subsequences_testData_avgLens5.csv'
+# out = parse_subseqs(PATH_DIR, cnn_att)
+# print("cnn_att", out)
+
+# cnn_att_neg = 'cnn35711a_above_top2std_subsequences_testData_avgLens5.csv'
+# out = parse_subseqs(PATH_DIR, cnn_att_neg, use_incorrect=True)
+# print("cnn_att", out)
 
 # two.loc[two.predicted == 'ER', 'predicted'] = 'Endoplasmic.reticulum'
 # two.loc[two.true == 'ER', 'true'] = 'Endoplasmic.reticulum'

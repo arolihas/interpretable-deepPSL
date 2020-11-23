@@ -19,7 +19,7 @@ ks = {}
 start = None
 def custom_estimate(itr, total):
     global start
-    if start is None:
+    if start is None or itr == 0:
         print("Initializing custom tqdm")
         start = time()
         return
@@ -29,10 +29,13 @@ def custom_estimate(itr, total):
     elapsed = str(datetime.timedelta(seconds=elapsed))
     print(f"Step {itr}/{total} | elapsed: {elapsed} | estimate_remaining: {remaining}")
 
-def parse_subseqs(filepath, filename, use_k_set=False, period=100):
+def parse_subseqs(filepath, filename, use_k_set=False, use_incorrect=False, period=100):
     print("Parsing:", filepath + filename)
     subs = pd.read_csv(filepath + filename)
-    subtp = subs[subs.classification]
+    if use_incorrect:
+        subtp = subs[~subs.classification]
+    else:
+        subtp = subs[subs.classification]
     input_seqs = np.unique(subtp.inputSequence)
     global ks
     period = period # max(subtp.inputSequence)
