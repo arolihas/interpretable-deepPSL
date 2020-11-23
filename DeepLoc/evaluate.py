@@ -18,7 +18,11 @@ from torch import device as dev
 from captum.attr import LayerIntegratedGradients, LayerGradientShap, LayerFeatureAblation, TokenReferenceBase, visualization
 from captum_viz import interpret_sequence
 from captum_viz import *
-import model.haard_net as net
+# import model.haard_net as net
+# import model.attn_lstm as net
+
+net = False
+net_name = ""
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data', help="Directory containing the dataset")
@@ -28,6 +32,7 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
 parser.add_argument('--captum_seq', default=False, help="to extract subsequences using gradient captum grad vis", action="store_true")
 parser.add_argument('--attn', default=False, help="use attention version of base model", action='store_true')
 parser.add_argument('--seqmethod', default='intgrad', help="could be 'intgrad' or 'saliency'")
+parser.add_argument('--net', default='model.attn_lstm', help="set whichever module you're using")
 # parser.add_argument
 
 attention_model = False
@@ -85,6 +90,7 @@ def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps,
     """top_std : top 2:25 % sequences (weights > mean + top_std*std)
     """
     mod = "Base" if not attention_model else "Attn"
+    mod = net_name + "-" + mod
     fname = f'above_top{top_std}std_subseqs_testData_beforeAfter{before_after}_{mod}Model_{seqmethod}Method.csv'
     print(fname)
 
@@ -101,6 +107,7 @@ def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps,
         interpret_sequence_copy(model, data_loader, data_iterator, layer_sal, vis_data_records, num_steps, verbose=True)
     # except Exception as e:
         # print(e)
+    exit()
 
     outseq = pd.DataFrame()
     before_after = 2
@@ -167,6 +174,7 @@ def evaluate(model, loss_fn, data_iterator, metrics, params, num_steps):
     logging.info("- Eval metrics : " + metrics_string)
     return metrics_mean
 
+import importlib
 
 if __name__ == '__main__':
     """
@@ -204,6 +212,8 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model
+    net = importlib.import_module(args.net)
+    net_name = args.net
     model = net.Net(params).cuda() if params.cuda else net.Net(params)
     
     loss_fn = net.loss_fn
