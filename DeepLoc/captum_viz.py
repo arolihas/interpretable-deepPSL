@@ -18,7 +18,7 @@ params.cuda = torch.cuda.is_available()
 
 # weights = MODEL_DIR + 'best.pth'
 classes = ['Extracellular', 'Plastid', 'Cytoplasm', 'Mitochondrion', 
-'Nucleus', 'ER', 'Golgi', 'Membrane', 'Lysosome', 'Peroxisome']
+           'Nucleus', 'Endoplasmic.reticulum', 'Golgi.apparatus', 'Cell.membrane', 'Lysosome/Vacuole', 'Peroxisome']
 
 # model = net.Net(params).cuda() if params.cuda else net.Net(params)
 # checkpoint = torch.load(weights, map_location=dev('cpu'))
@@ -68,9 +68,9 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
     """
     model.zero_grad()
     for n, param in model.named_parameters():
-        # param.requires_grad = True
+        param.requires_grad = False
         print(n, param.requires_grad)
-    exit()
+    # exit()
 
     # t = trange(num_steps)
     for i in range(num_steps):
@@ -91,7 +91,17 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
                 # exit()
                 attributions, delta = attribution.attribute(inp, reference_indices, n_steps=50, return_convergence_delta=True, target=label_batch[i])
             elif type(attribution) == Saliency:
-                attributions = attribution.attribute(inp.long(), label_batch[i].long())
+                print(type(inp), inp.dtype)
+                inp = inp.to(torch.long)
+                label_batch = label_batch.to(torch.long)
+                # inp.requires_grad_().long()
+                # label_batch = label_batch.requires_grad_().long()
+                # print(inp)
+                # print(inp.requires_grad)
+                # exit()
+                # attributions = attribution.attribute(inp, label_batch[i])
+                attributions = torch.jit.trace(attribution.attribute, inp, label_batch[i], check_trace=False)
+                exit()
                 delta = -1
             # print("Sequence:", sentence)
             if verbose: print('pred: ', classes[pred_ind], '(', '%.2f'%prob ,')', ', delta: ', abs(delta.numpy()[0]), ", true:", classes[label_batch[i]])
