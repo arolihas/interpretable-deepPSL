@@ -67,14 +67,14 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
     copy to better handle data
     """
     model.zero_grad()
-    for n, param in model.named_parameters():
-        param.requires_grad = False
-        print(n, param.requires_grad)
+    # for n, param in model.named_parameters():
+        # param.requires_grad = True
+        # print(n, param.requires_grad)
     # exit()
 
     # t = trange(num_steps)
     for i in range(num_steps):
-        if i > 2: break
+        # if i > 2: break
         if (i % 200) == 0:
             print("Step", i, "/", num_steps)
         data, label_batch = next(data_iterator)
@@ -101,6 +101,7 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
                 # exit()
                 # attributions = attribution.attribute(inp, label_batch[i])
                 attributions = torch.jit.trace(attribution.attribute, inp, label_batch[i], check_trace=False)
+                print("Saliency is not suppose to work. This will never print")
                 exit()
                 delta = -1
             # print("Sequence:", sentence)

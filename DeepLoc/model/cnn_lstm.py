@@ -42,7 +42,8 @@ class Net(nn.Module):
 
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
-        self.attention_type = params.attention_type
+        # self.attention_type = params.attention_type
+        self.attention_type = "average" # attention not being used
         if self.attention_type == "average":
             # do stuff for average attention_type
             pass

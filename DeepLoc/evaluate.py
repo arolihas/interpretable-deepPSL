@@ -98,16 +98,15 @@ def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps,
 
     vis_data_records = [] # passed in a reference
 
-    # try:
-    if seqmethod == 'intgrad':
-        layer_ig = LayerIntegratedGradients(model, model.embedding)
-        interpret_sequence_copy(model, data_loader, data_iterator, layer_ig, vis_data_records, num_steps, verbose=False)
-    else:
-        layer_sal = Saliency(model)
-        interpret_sequence_copy(model, data_loader, data_iterator, layer_sal, vis_data_records, num_steps, verbose=True)
-    # except Exception as e:
-        # print(e)
-    exit()
+    try:
+        if seqmethod == 'intgrad':
+            layer_ig = LayerIntegratedGradients(model, model.embedding)
+            interpret_sequence_copy(model, data_loader, data_iterator, layer_ig, vis_data_records, num_steps, verbose=False)
+        else:
+            layer_sal = Saliency(model)
+            interpret_sequence_copy(model, data_loader, data_iterator, layer_sal, vis_data_records, num_steps, verbose=True)
+    except Exception as e:
+        print(e)
 
     outseq = pd.DataFrame()
     before_after = 2
