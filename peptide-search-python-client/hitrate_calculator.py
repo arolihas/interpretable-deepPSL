@@ -5,12 +5,12 @@ import numpy as np
 from tqdm import tqdm
 
 ks = {}
-def parse_subseqs(filepath, filename, use_k_set=False):
+def parse_subseqs(filepath, filename, use_k_set=False, period=100):
     subs = pd.read_csv(filepath + filename)
     subtp = subs[subs.classification]
     input_seqs = np.unique(subtp.inputSequence)
     global ks
-    period = 100 # max(subtp.inputSequence)
+    period = period # max(subtp.inputSequence)
     hitrates = []
     global_vals = []
     if not use_k_set:

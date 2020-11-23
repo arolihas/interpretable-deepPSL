@@ -26,7 +26,7 @@ PATH_DIR = '../lstm_attn/lstm_linear_model/'
 print("---MLP---")
 uni_lstm_attn = 'preattn_mlp_above_top2std_subsequences_testData_avgLens5.csv'
 uni_lstm_rand = 'random_preattn_mlp_above_top2std_subsequences_testData_avgLens5.csv'
-uni_lstm_perm = 'permute_prreattn_mlp_above_top2std_subsequences_testData_avgLens5.csv'
+uni_lstm_perm = 'permute_preattn_mlp_above_top2std_subsequences_testData_avgLens5.csv'
 print('model ', parse_subseqs(PATH_DIR, uni_lstm_attn))
 print('permuted ', parse_subseqs(PATH_DIR, uni_lstm_perm, use_k_set=True))
 print('random ', parse_subseqs(PATH_DIR, uni_lstm_rand))
