@@ -13,5 +13,5 @@
     "save_summary_steps": 100,
     "attention_size": 512,
     "__comment_attention_type" : "regular | average",
-    "attention_type": "regular"
+    "attention_type": "average"
 }

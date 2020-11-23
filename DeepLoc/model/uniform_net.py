@@ -29,14 +29,14 @@ class Net(nn.Module):
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(self.mlayer, params.number_of_classes)
         #------------------attention params---------------------------------------------------------------------
-        self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size).cuda())
-        self.u_omega = Variable(torch.zeros(self.attention_size).cuda())
+        self.w_omega = Variable(torch.zeros(params.lstm_hidden_dim * params.n_layers, self.attention_size))#.cuda())
+        self.u_omega = Variable(torch.zeros(self.attention_size))#.cuda())
         self.w_omega.require_grads = True
         self.u_omega.require_grads = True
         #self.alphas_reshape = None
         #self.alphas_reshape = torch.load('attn_weight_matrix.pt')
         #-----------------affine params----------------------------------------
-        self.affine_weight = Variable(torch.zeros(params.embedding_dim,self.mlayer).cuda())
+        self.affine_weight = Variable(torch.zeros(params.embedding_dim,self.mlayer))#.cuda())
         self.affine_weight.require_grads = True
         self.aw = nn.Linear(params.embedding_dim,self.mlayer)
         
@@ -68,7 +68,7 @@ class Net(nn.Module):
 
         #self.alphas_reshape = torch.Tensor.reshape(alphas, [-1,sequence_length, 1])
         #print(alphas_reshape.size()) = (batch_size, squence_length, 1)
-        alphas_reshape = torch.ones(self.batch_size, affine_output.size()[0], 1).cuda()
+        alphas_reshape = torch.ones(self.batch_size, affine_output.size()[0], 1)#.cuda()
         state = affine_output.permute(1, 0, 2)
         #print(state.size()) = (batch_size, squence_length, self.mlayer)
         attn_output = torch.sum(state * alphas_reshape, 1)

@@ -23,13 +23,14 @@ PATH_DIR = '../DeepLoc/subsequences/'
 # print('random ', parse_subseqs(PATH_DIR, cnn_lstm_rand))
 
 
-print("---MLP---")
+# print("---MLP Attention---")
 uni_lstm_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.attn_mlp_net-BaseModel_intgradMethod.csv'
 uni_lstm_rand = 'above_top2std_subseqs_testData_beforeAfter2_model.preattn_mlp-BaseModel_intgradMethod.csv'
 uni_lstm_perm = 'above_top2std_subseqs_testData_beforeAfter2_model.uniform_net-BaseModel_intgradMethod.csv'
-print('preattn ', parse_subseqs(PATH_DIR, uni_lstm_attn))
-print('attn ', parse_subseqs(PATH_DIR, uni_lstm_rand, use_k_set=True))
-print('uniform ', parse_subseqs(PATH_DIR, uni_lstm_perm, use_k_set=True))
+# print('preattn ', parse_subseqs(PATH_DIR, uni_lstm_attn))
+# print('attn ', parse_subseqs(PATH_DIR, uni_lstm_rand))
+print("---MLP Uniform----")
+print('uniform ', parse_subseqs(PATH_DIR, uni_lstm_perm))
 
 # print("---MLP Attn---")
 # uni_lstm_attn = 'attn_mlp_above_top2std_subsequences_testData_avgLens5.csv'
