@@ -20,9 +20,13 @@ PATH_DIR = '../DeepLoc/subsequences/'
 # out1 = parse_subseqs(PATH_DIR, cnn_lstm35711)
 # print("cnn_lstm35711", out1)
 
-cnn_lstm = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm-BaseModel_intgradMethod.csv'
-out = parse_subseqs(PATH_DIR, cnn_lstm)
-print('cnn_lstm', out)
+cnn_lstm35711_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-AttnModel_intgradMethod.csv'
+out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_attn)
+print("cnn_lstm35711", out1)
+
+# cnn_lstm = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm-BaseModel_intgradMethod.csv'
+# out = parse_subseqs(PATH_DIR, cnn_lstm)
+# print('cnn_lstm', out)
 
 # two.loc[two.predicted == 'ER', 'predicted'] = 'Endoplasmic.reticulum'
 # two.loc[two.true == 'ER', 'true'] = 'Endoplasmic.reticulum'

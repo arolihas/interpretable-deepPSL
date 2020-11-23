@@ -79,7 +79,7 @@ def custom_estimate(itr, total):
     print(f"Step {itr}/{total} | elapsed: {elapsed} | estimate_remaining: {remaining}")
     
 
-def interpret_sequence_copy(model, data_loader, data_iterator, attribution, records, num_steps, verbose=True):
+def interpret_sequence_copy(model, data_loader, data_iterator, attribution, records, num_steps, verbose=True, mlp=False):
     """
     copy to better handle data
     """
@@ -107,7 +107,10 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
             if type(attribution) == LayerIntegratedGradients:
                 # print(inp, label_batch[i])
                 # exit()
-                attributions, delta = attribution.attribute(inp, reference_indices, n_steps=50, return_convergence_delta=True, target=label_batch[i])
+                if mlp:
+                    attributions, delta = attribution.attribute(inp, reference_indices, n_steps=1, return_convergence_delta=True, target=label_batch[i])
+                else:
+                    attributions, delta = attribution.attribute(inp, reference_indices, n_steps=50, return_convergence_delta=True, target=label_batch[i])
             elif type(attribution) == Saliency:
                 print(type(inp), inp.dtype)
                 inp = inp.to(torch.long)

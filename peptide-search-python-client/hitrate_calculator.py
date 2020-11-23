@@ -3,17 +3,31 @@ import subseq_utils as su
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-import time
+from time import time
+import datetime
 
 ks = {}
 
-def print_elapsed_time(prefix=''):
-    e_time = time.time()
-    if not hasattr(print_elapsed_time, 's_time'):
-        print_elapsed_time.s_time = e_time
-    else:
-        print(f'{prefix} elapsed time: {e_time - print_elapsed_time.s_time:.2f} sec')
-        print_elapsed_time.s_time = e_time
+# def print_elapsed_time(prefix=''):
+#     e_time = time.time()
+#     if not hasattr(print_elapsed_time, 's_time'):
+#         print_elapsed_time.s_time = e_time
+#     else:
+#         print(f'{prefix} elapsed time: {e_time - print_elapsed_time.s_time:.2f} sec')
+#         print_elapsed_time.s_time = e_time
+
+start = None
+def custom_estimate(itr, total):
+    global start
+    if start is None:
+        print("Initializing custom tqdm")
+        start = time()
+        return
+    elapsed = time() - start
+    frac_left = (total - itr)/itr
+    remaining = str(datetime.timedelta(seconds=elapsed*frac_left))
+    elapsed = str(datetime.timedelta(seconds=elapsed))
+    print(f"Step {itr}/{total} | elapsed: {elapsed} | estimate_remaining: {remaining}")
 
 def parse_subseqs(filepath, filename, use_k_set=False, period=100):
     print("Parsing:", filepath + filename)
@@ -26,9 +40,10 @@ def parse_subseqs(filepath, filename, use_k_set=False, period=100):
     global_vals = []
     if not use_k_set:
         k = 0
-    print_elapsed_time()
+    # print_elapsed_time()
     for i in range(0,period):
-        print_elapsed_time(f"Step {i}")
+        # print_elapsed_time(f"Step {i}")
+        custom_estimate(i, period)
         if not use_k_set:
             while k in ks.values():
                 k = np.random.randint(0, len(input_seqs))
