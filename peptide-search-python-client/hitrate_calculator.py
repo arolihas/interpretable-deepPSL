@@ -6,6 +6,7 @@ from tqdm import tqdm
 import time
 
 ks = {}
+
 def print_elapsed_time(prefix=''):
     e_time = time.time()
     if not hasattr(print_elapsed_time, 's_time'):
@@ -14,13 +15,13 @@ def print_elapsed_time(prefix=''):
         print(f'{prefix} elapsed time: {e_time - print_elapsed_time.s_time:.2f} sec')
         print_elapsed_time.s_time = e_time
 
-def parse_subseqs(filepath, filename, use_k_set=False):
+def parse_subseqs(filepath, filename, use_k_set=False, period=100):
     print("Parsing:", filepath + filename)
     subs = pd.read_csv(filepath + filename)
     subtp = subs[subs.classification]
     input_seqs = np.unique(subtp.inputSequence)
     global ks
-    period = 100 # max(subtp.inputSequence)
+    period = period # max(subtp.inputSequence)
     hitrates = []
     global_vals = []
     if not use_k_set:
