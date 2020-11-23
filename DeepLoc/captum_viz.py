@@ -91,7 +91,7 @@ def interpret_sequence_copy(model, data_loader, data_iterator, attribution, reco
 
     # t = trange(num_steps)
     for i in range(num_steps):
-        # if i > 2: break
+        if i > 5: break
         if (i % 200) == 0:
             # print("Step", i, "/", num_steps)
             custom_estimate(i+1, num_steps)

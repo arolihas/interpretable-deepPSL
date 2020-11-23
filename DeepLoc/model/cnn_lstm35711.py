@@ -68,16 +68,30 @@ class Net(nn.Module):
         # the fully connected layer transforms the output to give the final output layer
         self.fc = nn.Linear(params.lstm_hidden_dim*2, params.number_of_classes)
 
-    def attention_net(self, lstm_output):
+    def attention_net(self, lstm_output, random=False, permute=False):
         sequence_length = lstm_output.size()[0]
         batch_size = lstm_output.size()[1]
         if self.attention_type != "average":
             output_reshape = torch.Tensor.reshape(lstm_output, [-1, self.lstm_hidden_dim*self.n_layers])
             # attn_tanh = torch.tanh(torch.mm(output_reshape, self.w_omega))
             # attn_hidden_layer = torch.mm(attn_tanh, torch.Tensor.reshape(self.u_omega, [-1, 1]))
-            attn_tanh = torch.tanh(self.w_omega(output_reshape))
-            attn_hidden_layer = self.u_omega(attn_tanh)
-            
+            if random:
+                # print("Random!")
+                attn_hidden_layer = torch.rand(output_reshape.shape[0], 1)
+            else:
+                # print("Non Random")
+                attn_tanh = torch.tanh(self.w_omega(output_reshape))
+                attn_hidden_layer = self.u_omega(attn_tanh)
+                # print(attn_hidden_layer)
+                if permute:
+                    # print("Permute!")
+                    attn_hidden_layer = attn_hidden_layer.squeeze()
+                    attn_hidden_layer = attn_hidden_layer[torch.randperm(attn_hidden_layer.shape[0])]
+                    attn_hidden_layer = attn_hidden_layer.unsqueeze(1)
+                # print(attn_hidden_layer)
+
+            # print(attn_hidden_layer.shape)
+
             exps = torch.Tensor.reshape(torch.exp(attn_hidden_layer), [-1, sequence_length])
             alphas = exps / torch.Tensor.reshape(torch.sum(exps, 1), [-1, 1])
             #print(alphas.size()) = (batch_size, squence_length)
@@ -95,7 +109,7 @@ class Net(nn.Module):
         return attn_output, alphas_reshape
 
         
-    def forward(self, s):
+    def forward(self, s, random=False, permute=False):
 
         embedded = self.embedding(s)            # dim: batch_size x seq_len x embedding_dim
         embedded = embedded.permute(0, 2, 1) # dim: batch_size, embedding_dim, seq_len
@@ -111,13 +125,13 @@ class Net(nn.Module):
         output, (hidden_state, cell_state)  = self.lstm(embedded) 
 
         if self.attention:
-            attn_output, attn_weights = self.attention_net(output)
+            attn_output, attn_weights = self.attention_net(output, random=random, permute=permute)
             hidden = self.dropout(attn_output)
         else:
             hidden = self.dropout(torch.cat((hidden_state[-2], hidden_state[-1]), dim=1))
             #hidden = [batch size, lstm_hidden_dim * num directions]
 
-        return self.fc(hidden) # dim: batch_size x num_tags
+        return self.fc(hidden), attn_weights # dim: batch_size x num_tags
 
 
 def loss_fn(outputs, labels):

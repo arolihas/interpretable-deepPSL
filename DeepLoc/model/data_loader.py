@@ -34,6 +34,7 @@ class DataLoader(object):
         with open(tags_path) as f:
             for i, t in enumerate(f.read().splitlines()):
                 self.tag_map[t] = i
+        # print("Tag map", self.tag_map)
         self.idx_to_tag = {y:x for x,y in self.tag_map.items()}
 
         # adding dataset parameters to param (e.g. vocab size, )

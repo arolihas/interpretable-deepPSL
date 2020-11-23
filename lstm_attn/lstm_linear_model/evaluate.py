@@ -31,7 +31,7 @@ model_dir = None
 # def get_sahils(model, ):
 
 
-def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, random=False, permute=False, before_after=2):
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, fname='', random=False, permute=False, before_after=2):
     model.eval()
 
     sequences = pd.DataFrame()
@@ -44,23 +44,27 @@ def get_subsequences(model, data_loader, data_iterator, metrics, params, num_ste
             # print(labels_batch.shape)
             # print(data_batch[0])
             out = utils.get_subsequences(model, data_batch, labels_batch, data_loader, i, before_after=before_after, random=random, permute=permute)
-            print(out)
+            # print(out)
             sequences = sequences.append(out)
 
             # if (i % 100) == 0: print(i)
             # exit()
-            _ = input("ENTER to continue")
+            # _ = input("ENTER to continue")
         except Exception as e:
             print(i)
             print(e)
             # die()
     if not os.path.exists('subsequences'): os.makedirs('subsequences')
-    fname = 'subsequences/above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
-    if random:
-        fname = "random_" + fname
-    if permute:
-        fname = "permute_" + fname
+    if fname == '':
+        fname = 'above_top2std_subsequences_testData_avgLens{}.csv'.format(before_after*2+1)
+        if random:
+            fname = "random_" + fname
+        if permute:
+            fname = "permute_" + fname
+    fname = os.path.join('subsequences', fname)
+
     sequences.to_csv(fname, index=False)
+    print("Saved subsequence to", fname)
 
 
 def visualize(model, data_loader, data_iterator, metrics, params, num_steps, random=False):
@@ -82,9 +86,9 @@ def visualize(model, data_loader, data_iterator, metrics, params, num_steps, ran
         # print(data_batch.shape)
         # print(labels_batch.shape)
         # print(data_batch[0])
-        utils.visualize(model, data_batch, labels_batch, data_loader, i, view_browser=False)
+        utils.visualize(model, data_batch, labels_batch, data_loader, i, view_browser=True)
         # exit()
-        # _ = input("ENTER to continue")
+        _ = input("ENTER to continue")
 
 
 

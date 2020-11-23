@@ -4,6 +4,8 @@ import os
 import shutil
 
 import torch
+import numpy as np
+import pandas as pd
 
 
 class Params():
@@ -150,4 +152,68 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     return checkpoint
 
 
+def _subseq(sequence, weights, top_std, predicted_label, true_label, before_after, sampleIdx):
+    correct = predicted_label == true_label
+    # print("predicted", predicted_label, "| true", true_label, "|", correct)
+
+    # print(weights.shape)
+    # print(weights[:10])
+    mean, std = weights.mean(), weights.std()
+    indices = np.where(weights > (mean + top_std*std))[0]
+
+    allseqs = []
+    cols = ['left', 'right', 'subsequence', 'predicted', 'true', 'classification', 'inputSequence']
+    for idx in indices:
+        left = idx - before_after
+        if left < 0: left = 0
+        right = idx + before_after + 1
+        if right > len(sequence): right = len(sequence)
+        
+        subseq = ''.join(sequence[left:right])
+        allseqs.append([left, right, subseq, predicted_label, true_label, correct, sampleIdx])
+    # print(pd.DataFrame(allseqs, columns=cols))
+    newSeqs = []
+    i = 0
+    while i < len(allseqs):
+        row = allseqs[i]
+        newSeqRow = row
+        currleft = row[0]
+        currright = row[1]
+        j = i + 1
+        if j < len(allseqs):
+            nextLeft = allseqs[j][0]
+        else:
+            newSeqs.append(row)
+            break
+        while nextLeft < currright:
+            currright = allseqs[j][1]
+            j += 1
+            if j >= len(allseqs): break
+            nextLeft = allseqs[j][0]
+        newRight = allseqs[j-1][1]
+        newSeqRow[1] = newRight
+        newSeqRow[2] = ''.join(sequence[currleft : newRight])
+        newSeqs.append(newSeqRow)
+        i = j
+
+    allseqs = pd.DataFrame(newSeqs, columns=cols)
+    # print(pd.DataFrame(allseqs, columns=cols))
+    return allseqs
+
+def get_subsequences(model, sequence, label, data_loader, sampleIdx, before_after=2, random=False, permute=False):
+    output, attn_weights = model(sequence, random=random, permute=permute)
+
+    classes = list(data_loader.tag_map.keys())
+    true_label = label.tolist()[0]
+    true_label = classes[true_label]
+
+    sequence = [data_loader.idx_to_vocab[x] for x in sequence.squeeze().tolist()]
+    attn_weights = np.array(attn_weights.squeeze().tolist())
+
+    sm = torch.softmax(output.detach(), dim=1).flatten().cpu()
+    predicted_label = classes[sm.argmax().item()]
+
+    allseqs = _subseq(sequence, attn_weights, 2, predicted_label, true_label, before_after, sampleIdx)
+
+    return allseqs
 

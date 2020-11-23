@@ -329,7 +329,7 @@ def getImgDiv(imgFile, desc):
     # exit()
     return html_div
 
-def runModel(model, sequence, label, data_loader, scale_attn=100, random=False, permute=False):
+def runModel(model, sequence, label, data_loader, scale_attn=5, random=False, permute=False):
     """
     label: true label
     """

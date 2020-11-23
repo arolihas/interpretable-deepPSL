@@ -18,7 +18,7 @@ from torch import device as dev
 from captum.attr import LayerIntegratedGradients, LayerGradientShap, LayerFeatureAblation, TokenReferenceBase, visualization
 from captum_viz import interpret_sequence
 from captum_viz import *
-# import model.haard_net as net
+# import model.haard_net as netac
 # import model.attn_lstm as net
 
 net = False
@@ -30,10 +30,15 @@ parser.add_argument('--model_dir', default='experiments', help="Directory contai
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 parser.add_argument('--captum_seq', default=False, help="to extract subsequences using gradient captum grad vis", action="store_true")
+
 parser.add_argument('--attn', default=False, help="use attention version of base model", action='store_true')
 parser.add_argument('--seqmethod', default='intgrad', help="could be 'intgrad' or 'saliency'")
 parser.add_argument('--net', default='model.attn_lstm', help="set whichever module you're using")
 parser.add_argument('--mlp', default=False, action='store_true')
+
+parser.add_argument('--subsequence', default=False, help="vis ?", action="store_true")
+parser.add_argument('--random', default=False, help="randomize attention weights", action="store_true")
+parser.add_argument('--permute', default=False, help="permute attention weights", action="store_true")
 # parser.add_argument
 
 attention_model = False
@@ -86,6 +91,42 @@ def _subseq(sequence, weights, top_std, predicted_label, true_label, before_afte
     allseqs = pd.DataFrame(newSeqs, columns=cols)
     # print(pd.DataFrame(allseqs, columns=cols))
     return allseqs
+
+def get_subsequences(model, data_loader, data_iterator, metrics, params, num_steps, fname='', random=False, permute=False, before_after=2):
+    model.eval()
+    
+    if fname == '':
+        name = 'regular'
+        if random: name = 'random'
+        if permute: name = 'permute'
+        fname = f'above_top{2}std_subseqs_testData_beforeAfter{before_after}_Model-{net_name}_{name}Attn.csv'
+    print("outfile", fname)
+    sequences = pd.DataFrame()
+
+    for i in tqdm(range(num_steps)):
+        try:
+            data_batch, labels_batch = next(data_iterator)
+            # if i < 2 : continue
+            # print(data_batch.shape)
+            # print(labels_batch.shape)
+            # print(data_batch[0])
+            out = utils.get_subsequences(model, data_batch, labels_batch, data_loader, i, before_after=before_after, random=random, permute=permute)
+            # print(out)
+            # exit()
+            sequences = sequences.append(out)
+
+            # if (i % 100) == 0: print(i)
+            # exit()
+            # _ = input("ENTER to continue")
+        except Exception as e:
+            print(i)
+            print(e)
+            # die()
+    if not os.path.exists('subsequences'): os.makedirs('subsequences')
+    fname = os.path.join('subsequences', fname)
+
+    sequences.to_csv(fname, index=False)
+    print("Saved subsequence to", fname)
 
 def captum_subseq(model, data_loader, data_iterator, metrics, params, num_steps, before_after=2, top_std=2, mlp=False):
     """top_std : top 2:25 % sequences (weights > mean + top_std*std)
@@ -200,7 +241,7 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # load data
-    if args.captum_seq: params.batch_size = 1
+    if args.captum_seq or args.subsequence: params.batch_size = 1
     data_loader = DataLoader(args.data_dir, params)
     data = data_loader.load_data(['test'], args.data_dir)
     test_data = data['test']
@@ -232,6 +273,8 @@ if __name__ == '__main__':
         attention_model = True
     if args.captum_seq:
         captum_subseq(model, data_loader, test_data_iterator, metrics, params, num_steps, mlp=args.mlp)
+    elif args.subsequence:
+        get_subsequences(model, data_loader, test_data_iterator, metrics, params, num_steps, random=args.random, permute=args.permute)
     else:
         test_metrics = evaluate(model, loss_fn, test_data_iterator, metrics, params, num_steps)
         save_path = os.path.join(args.model_dir, "metrics_test_{}_attn{}.json".format(args.restore_file, args.attn))
