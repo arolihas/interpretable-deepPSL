@@ -17,40 +17,45 @@ def parse(PATH_DIR, fname, use_k_set=False, use_incorrect=False, use_true_class=
 PATH_DIR = '../DeepLoc/subsequences/'
 
 attn_integrad = 'above_top2std_subseqs_testData_beforeAfter2_AttnModel_intgradMethod2.csv'
-# base_integrad = 'above_top2std_subseqs_testData_beforeAfter2_BaseModel_intgradMethod2.csv'
-
-# out1 = parse_subseqs(PATH_DIR, attn_integrad)
-# print('attn_integrad ', out1)  # (0.5013162209561454), (0.4798704375948095)
 # parse(PATH_DIR, attn_integrad, special_label='LSTM_ATTN-IntGrad')
 # parse(PATH_DIR, attn_integrad, use_incorrect=True, special_label='LSTM_ATTN-IntGrad false, pred')
 # parse(PATH_DIR, attn_integrad, use_incorrect=True, use_true_class=True, special_label='LSTM_ATTN-IntGrad, false, true')
 
-# out2 = parse_subseqs(PATH_DIR, base_integrad, use_k_set=False)
-# print('base_integrad ', out2)  # (error), (0.4633674345162402)
+base_integrad = 'above_top2std_subseqs_testData_beforeAfter2_BaseModel_intgradMethod2.csv'
+# parse(PATH_DIR, base_integrad, special_label='LSTM_BASE')
+# parse(PATH_DIR, base_integrad, use_incorrect=True, special_label='LSTM_BASE false, pred')
+# parse(PATH_DIR, base_integrad, use_incorrect=True, use_true_class=True, special_label='LSTM_BASE false, true')
 
-# out = parse_subseqs(PATH_DIR, base_integrad, use_incorrect=True)
-# print('base_lstm incorrect', out)
-# out = parse_subseqs(PATH_DIR, base_integrad, use_incorrect=True, use_true_class=True)
-# print('base_lstm incorrect trueclass', out)
-
+# RUNNING (local)
 fname = 'above_top2std_subseqs_testData_beforeAfter2_Model-model.cnn_lstm35711_regularAttn.csv'
 # parse(PATH_DIR, fname, special_label='CNN_LSTM_ATTNreg')
 # parse(PATH_DIR, fname, use_incorrect=True, special_label='CNN_LSTM_ATTNreg false, pred')
-parse(PATH_DIR, fname, use_incorrect=True, use_true_class=True, special_label='CNN_LSTM_ATTNreg false, true')
-exit()
+# parse(PATH_DIR, fname, use_incorrect=True, use_true_class=True, special_label='CNN_LSTM_ATTNreg false, true')
+
+# RUNNING (local)
+fname = 'above_top2std_subseqs_testData_beforeAfter2_Model-model.cnn_lstm35711_permuteAttn.csv'
+# parse(PATH_DIR, fname, special_label='CNN_LSTM_ATTNpermute')
+# parse(PATH_DIR, fname, use_incorrect=True, special_label='CNN_LSTM_ATTNpermute false, pred')
+# parse(PATH_DIR, fname, use_incorrect=True, use_true_class=True, special_label='CNN_LSTM_ATTNpermute false, true')
+
+fname = 'above_top2std_subseqs_testData_beforeAfter2_Model-model.cnn_lstm35711_randomAttn.csv'
+# parse(PATH_DIR, fname, special_label='CNN_LSTM_ATTNrandom')
+# parse(PATH_DIR, fname, use_incorrect=True, special_label='CNN_LSTM_ATTNrandom false, pred')
+# parse(PATH_DIR, fname, use_incorrect=True, use_true_class=True, special_label='CNN_LSTM_ATTNrandom false, true')
+# exit()
 
 
 lstm_uniform = 'above_top2std_subseqs_testData_beforeAfter2_model.net_uniform-BaseModel_intgradMethod.csv'
-# out1 = parse_subseqs(PATH_DIR, lstm_uniform)
-# print("lstm_uniform", out1)
 # parse(PATH_DIR, lstm_uniform, special_label='LSTM-uniform-ATTN')
 # parse(PATH_DIR, lstm_uniform, use_incorrect=True, use_true_class=False, special_label='LSTM-uniform-ATTN false, pred')
 # parse(PATH_DIR, lstm_uniform, use_incorrect=True, use_true_class=True, special_label='LSTM-uniform-ATTN false, true')
 
 
-# cnn_lstm35711 = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-BaseModel_intgradMethod.csv'
-# out1 = parse_subseqs(PATH_DIR, cnn_lstm35711)
-# print("cnn_lstm35711", out1)
+cnn_lstm35711 = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-BaseModel_intgradMethod.csv'
+# parse(PATH_DIR, cnn_lstm35711, special_label='CNN_LSTM_BASE-IG')
+# parse(PATH_DIR, cnn_lstm35711, use_incorrect=True, special_label='CNN_LSTM_BASE-IG false, pred')
+# parse(PATH_DIR, cnn_lstm35711, use_incorrect=True, use_true_class=True, special_label='CNN_LSTM_BASE-IG false, true')
+
 
 cnn_lstm35711_attn = 'above_top2std_subseqs_testData_beforeAfter2_model.cnn_lstm35711-AttnModel_intgradMethod.csv'
 # out1 = parse_subseqs(PATH_DIR, cnn_lstm35711_attn)
