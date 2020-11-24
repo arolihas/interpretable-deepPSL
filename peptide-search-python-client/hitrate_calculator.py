@@ -50,6 +50,7 @@ def parse_subseqs(filepath, filename, use_k_set=False, use_incorrect=False, use_
     if len(input_seqs) < period:
         print("RESETING period to", len(input_seqs))
         period = len(input_seqs)
+    print("calculating for", period, "of total", len(input_seqs))
     # print_elapsed_time()
     for i in range(0,period):
         if not use_k_set:
@@ -79,4 +80,4 @@ def parse_subseqs(filepath, filename, use_k_set=False, use_incorrect=False, use_
     df.to_csv(filepath + 'hitrate10_{}'.format(filename))
     global_val = pd.concat(global_vals)
     global_val.to_csv(filepath+'vals_{}'.format(filename), index=False)
-    return np.mean(hitrates), np.sum(hitrates)
+    return {"mean_hr": np.mean(hitrates), "std_hr": np.std(hitrates), "period":period}

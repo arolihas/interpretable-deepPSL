@@ -1,0 +1,20 @@
+-------------------------- LSTM_ATTN-IG ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM_ATTN-IG | period: 500
+-------------------------- LSTM_BASE ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM_BASE | period: 500
+-------------------------- LSTM_ATTN-IG ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM_ATTN-IG | period: 500
+-------------------------- LSTM_ATTN-IG ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM_ATTN-IG | period: 500
+-------------------------- LSTM_BASE ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM_BASE | period: 500
+-------------------------- CNN_LSTM_ATTNreg ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_ATTNreg | period: 500
+-------------------------- CNN_LSTM_ATTNpermute ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_ATTNpermute | period: 500
+-------------------------- CNN_LSTM_ATTNrandom ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_ATTNrandom | period: 500
+-------------------------- LSTM-uniform-ATTN ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM-uniform-ATTN | period: 500
+-------------------------- CNN_LSTM_BASE-IG ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_BASE-IG | period: 500

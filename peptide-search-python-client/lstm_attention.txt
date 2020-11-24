@@ -1,0 +1,2 @@
+-------------------------- lstm_attention ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: lstm_attention | period: 500

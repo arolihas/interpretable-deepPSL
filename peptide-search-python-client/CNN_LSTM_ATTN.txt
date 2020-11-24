@@ -1,0 +1,4 @@
+-------------------------- CNN_LSTM_ATTN ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_ATTN | period: 500
+CNN_LSTM_ATTN | Hitrate: (0.29370938439359084, 0.36480006672122206)
+Elapsed time: 0:30:05.876597

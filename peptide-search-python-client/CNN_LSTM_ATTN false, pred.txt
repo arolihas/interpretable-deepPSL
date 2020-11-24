@@ -1,0 +1,2 @@
+-------------------------- CNN_LSTM_ATTN false, pred ----------------------------
+use_k_set: True | use_incorrect: True | use_true_class: False | special_label: CNN_LSTM_ATTN false, pred | period: 500

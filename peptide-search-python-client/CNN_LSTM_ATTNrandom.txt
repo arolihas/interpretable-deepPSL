@@ -1,0 +1,2 @@
+-------------------------- CNN_LSTM_ATTNrandom ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: CNN_LSTM_ATTNrandom | period: 500

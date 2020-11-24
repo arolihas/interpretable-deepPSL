@@ -1,0 +1,2 @@
+-------------------------- LSTM-uniform-ATTN ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: LSTM-uniform-ATTN | period: 500

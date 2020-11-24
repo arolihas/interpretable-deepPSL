@@ -1,0 +1,2 @@
+-------------------------- lstm_attention_permute ----------------------------
+use_k_set: False | use_incorrect: False | use_true_class: False | special_label: lstm_attention_permute | period: 500
